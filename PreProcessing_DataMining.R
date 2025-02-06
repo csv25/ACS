@@ -18,7 +18,4 @@ sum(is.na(df))
 sort(colSums(is.na(df)), decreasing=TRUE)
 
 #Learning the summary of some of the important variables
-""" 
-# RT is only P
-
-"""
+#this is an editing to test the version control
