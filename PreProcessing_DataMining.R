@@ -19,3 +19,5 @@ sort(colSums(is.na(df)), decreasing=TRUE)
 
 #Learning the summary of some of the important variables
 #this is an editing to test the version control
+
+#this is a new test again
