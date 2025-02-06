@@ -44,3 +44,7 @@ cat("Number of columns in the new df:", columns_3, "\n")
 
 sorted <- sort(colSums(is.na(df)), decreasing=TRUE)
 sorted
+
+# Total number of rows & columns
+dimensions=dim(df)
+cat("Number of rows & columns: ", dimensions)
