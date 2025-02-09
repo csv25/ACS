@@ -243,6 +243,152 @@ cat("Number of rows & columns: ", dimensions)
 
 write.csv(df,"filtered_data.csv", row.names = FALSE, col.names = TRUE)
 
+#Sum of the missing values in each column
+missing_values <- sort(colSums(is.na(df)), decreasing=FALSE)
+
+print(missing_values)
+
+# NWAB     NWAV     NWLA     NWLK 
+# 58       58       58       58
+
+table(df$NWAB)
+
+# Temporary absence from work (UNEDITED - See 'Employment Status Recode' (ESR))
+# b .N/A (less than 16 years old/at work/on layoff)
+# 1 .Yes
+# 2 .No
+# 3 .Did not report
+
+# 1    2    3 
+# 41 1428 2791 
+
+# We can just edit it to did not report since we have that as an option
+
+table(df$NWAV)
+# NWAV
+# 58  
+
+# Available for work (UNEDITED - See 'Employment Status Recode' (ESR))
+# b .N/A (less than 16 years/at work/not looking)
+# 1 .Yes
+# 2 .No, temporarily ill
+# 3 .No, other reasons
+# 4 .No, unspecified
+# 5 .Did not report
+
+# > table(df$NWAV)
+# 
+# 1    2    3    5 
+# 137   21  103 3999
+
+
+table(df$NWLA)
+# NWLA     
+# 58 missing
+
+# Meaning:
+# On layoff from work (UNEDITED - See 'Employment Status Recode' (ESR))
+# b .N/A (less than 16 years old/at work)
+# 1 .Yes
+# 2 .No
+# 3 .Did not report
+
+# > table(df$NWLA)
+# 
+# 1    2    3 
+# 25 1519 2716 
+
+table(df$NWLK)
+# NWLK 
+# 58 missing:
+
+# Meaning:
+# Looking for work (UNEDITED - See 'Employment Status Recode' (ESR))
+# b .N/A (less than 16 years old/at work/temporarily .absent/informed of recall)
+# 1 .Yes
+# 2 .No
+# 3 .Did not report
+# 
+# > table(df$NWLK)
+# 
+# 1    2    3 
+# 125 1391 2744 
+
+
+table(df$ESR)
+# ESR 
+# 58 missing
+
+# Meaning:
+# Employment status recode
+# b .N/A (less than 16 years old)
+# 1 .Civilian employed, at work
+# 2 .Civilian employed, with a job but not at work
+# 3 .Unemployed
+# 4 .Armed forces, at work
+# 5 .Armed forces, with a job but not at work
+# 6 .Not in labor force
+
+# > table(df$ESR)
+# 
+# 1       2    3    4    6 
+# 2583   42   85    6 1544 
+
+
+table(df$PERNP)
+# PERNP
+# 58 missing
+
+#Meaning: 
+  
+# PERNP
+# Total person's earnings (use ADJINC to adjust to constant dollars)
+# bbbbbbb .N/A (less than 16 years old)
+# 0 .No earnings
+# -10000 .Loss of $10000 or more (Rounded and bottom- .coded components)
+# -9999 to -1 .Loss $1 to $9999 (Rounded components)
+# 1 to 1999998 .$1 to $1999998
+  
+# Decision: DELETE THIS, it doesnt tell us much
+
+
+table(df$MIL)
+# MIL
+# 108
+
+# Meaning:
+# Military service
+# b .N/A (less than 17 years old)
+# 1 .Now on active duty
+# 2 .On active duty in the past, but not now
+# 3 .Only on active duty for training
+# 4 .Never served in the military
+  
+# > table(df$MIL)
+# 
+# 1    2    3    4 
+# 5  173   50 3982
+
+
+# POVPIP 
+# 259 
+
+
+
+# OC       RC      WRK 
+# 334      334      615 
+# GCL      COW     INDP 
+# 948     1077     1077 
+# OCCP     WKHP     WKWN 
+# 1077     1437     1437 
+# MARHM    MARHT    MARHW 
+# 1542     1542     1542 
+# MARHYP   JWTRNS  POWPUMA 
+# 1542     1729     1729 
+# POWSP 
+# 1729 
+
+
 
 
 #method 4: Finding the variables that are highly correlated with each other
