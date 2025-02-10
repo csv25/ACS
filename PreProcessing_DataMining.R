@@ -54,8 +54,8 @@ cat("Number of rows & columns: ", dimensions)
 #method 3: Removing values that have near zero variance
 # in the data set apart from the ones that we have already removed
 
-df_zv <- nearZeroVar(df, saveMetrics = TRUE)
-df_zv
+# df_zv <- nearZeroVar(df, saveMetrics = TRUE)
+# df_zv
 
 #now let's sort the variables that show true for Zerovar and nzv
 #meaning that they have no variance or little variance.
@@ -70,49 +70,69 @@ df_zv_sorted
 # RACNH       0.000000    0.02315887    TRUE  TRUE
 
 table(df$RACNH)
-#decision: Delete, there is zero variance in this variable
+#decision: DELETE
+#There is zero variance in this variable
 
 # GCL        38.647059    0.04631774   FALSE  TRUE
 
 table(df$GCL)
+
+# Grandparents living with grandchildren
+# b .N/A (less than 30 years/institutional GQ)
+# 1 .Yes
+# 2. NO
+
 # Output:
 # 
 # 1    2 
 # 85 3285
+
 # Decision: Keep, it seems like the values are skekewed, but 
 # the data is consistent
 
-# HINS5      88.958333    0.04631774   FALSE  TRUE
-
 
 table(df$HINS5)
+# HINS5      88.958333    0.04631774   FALSE  TRUE
 # 
 # Output: 
 #   1    2 
 # 48  4270 
 
+# TRICARE or other military health care
+# 1 .Yes
+# 2 .No
 
 
 
-# HINS6      62.500000    0.04631774   FALSE  TRUE
+
+
   
 table(df$HINS6)  
+# HINS6      62.500000    0.04631774   FALSE  TRUE
 # 
 # output:
 #   1    2 
 # # 68  4250
 # decision: Keep, we can see how skeewed things are
+# 
+# VA (enrolled for VA health care)
+# 1 .Yes
+# 2 .No
   
-# HINS7     862.600000    0.04631774   FALSE  TRUE
+
 
 table(df$HINS7)
+# HINS7     862.600000    0.04631774   FALSE  TRUE
 
 # 1    2 
 # 5 4313
 # 
 # We can honestly delete this one, it does not say anything 
 # with these margings
-#decision: delete
+#decision: DELETE
+# Indian Health Service
+# 1 .Yes
+# 2 .No
 
 
 
@@ -121,18 +141,30 @@ table(df$HINS7)
 table(df$INTP)
 #we could use it create ranges, but that is about it
 # we should review the name and see what it stands for
-#decision: keep
 
-# MARHD     110.040000    0.04631774   FALSE  TRUE
+#decision: DELETE
+
+# Interest, dividends, and net rental income past 12 months (use ADJINC to adjust to constant dollars)
+# bbbbbb     .N/A (less than 15 years old)
+# 0          .None
+# -10000..-4 .Loss of $4 to $10000 (Rounded and bottom-coded)
+# 4..999999 .$4 to $999999 (Rounded and top-coded)
+
+
 table(df$MARHD)
+# MARHD     110.040000    0.04631774   FALSE  TRUE
 #decision: delete
-
 
 
 # MARHM      38.657143    0.04631774   FALSE  TRUE
 
 table(df$MARHM)
 # decision: Keep for now
+# Married in the past 12 months
+# b .N/A (age less than 15 years; never married)
+# 1 .Yes
+# 2 .No
+
 
 # MARHW      94.724138    0.04631774   FALSE  TRUE
 
@@ -264,6 +296,11 @@ table(df$NWAB)
 
 # We can just edit it to did not report since we have that as an option
 
+df$NWAB <- ifelse(is.na(df$NWAB), 3, df$NWAB)
+
+table(df$NWAB)
+
+
 table(df$NWAV)
 # NWAV
 # 58  
@@ -280,6 +317,11 @@ table(df$NWAV)
 # 
 # 1    2    3    5 
 # 137   21  103 3999
+# decision: Keep
+
+df$NWAV <- ifelse(is.na(df$NWAV), 5, df$NWAV)
+
+table(df$NWAV)
 
 
 table(df$NWLA)
@@ -296,7 +338,12 @@ table(df$NWLA)
 # > table(df$NWLA)
 # 
 # 1    2    3 
-# 25 1519 2716 
+# 25 1519 2716
+
+df$NWLA <- ifelse(is.na(df$NWLA), 3, df$NWLA)
+table(df$NWLA)
+
+# Decision: Keep
 
 table(df$NWLK)
 # NWLK 
@@ -313,6 +360,12 @@ table(df$NWLK)
 # 
 # 1    2    3 
 # 125 1391 2744 
+
+# Decision: Keep
+df$NWLK <- ifelse(is.na(df$NWLA), 3, df$NWLA)
+
+table(df$NWLK)
+
 
 
 table(df$ESR)
@@ -334,6 +387,11 @@ table(df$ESR)
 # 1       2    3    4    6 
 # 2583   42   85    6 1544 
 
+# Decision: Keep
+
+df$ESR <- ifelse(is.na(df$ESR), 6, df$ESR)
+table(df$ESR)
+
 
 table(df$PERNP)
 # PERNP
@@ -350,6 +408,8 @@ table(df$PERNP)
 # 1 to 1999998 .$1 to $1999998
   
 # Decision: DELETE THIS, it doesnt tell us much
+
+
 
 
 table(df$MIL)
@@ -369,29 +429,149 @@ table(df$MIL)
 # 1    2    3    4 
 # 5  173   50 3982
 
+# decision: keep
 
+df$MIL <- ifelse(is.na(df$MIL), 4, df$MIL)
+table(df$MIL)
+
+
+table(df$POVPIP)
 # POVPIP 
 # 259 
-
-
-
-# OC       RC      WRK 
-# 334      334      615 
-# GCL      COW     INDP 
-# 948     1077     1077 
-# OCCP     WKHP     WKWN 
-# 1077     1437     1437 
-# MARHM    MARHT    MARHW 
-# 1542     1542     1542 
-# MARHYP   JWTRNS  POWPUMA 
-# 1542     1729     1729 
-# POWSP 
-# 1729 
+# Meaning:
+# Income-to-poverty ratio recode
+# bbb      .N/A (individuals who are under 15 and are either living .in a housing unit but are unrelated to the householder .or are living in select group quarters)
+# 0..500   .Below 501 percent
+# 501      .501 percent or more
+# DECISION: DELETE
 
 
 
 
-#method 4: Finding the variables that are highly correlated with each other
+
+
+table(df$OC)
+#OC 
+#334
+
+# Meaning: 
+# Own child
+# b .N/A (in GQ)
+# 0 .No
+# 1 .Yes
+
+# > table(df$OC)
+# 
+# 0    1 
+# 3851  133
+
+#DECISION: Delete this one
+
+table(df$RC)
+# RC      
+# 334    
+# Meaning:
+# Related child
+# b .N/A (in GQ)
+# 0 .No
+# 1 .Yes
+
+# > table(df$RC)
+# 
+# 0     1 
+# 3838  146 
+#DECISION DELETE
+
+
+
+table(df$WRK)
+#WRK
+#615
+
+# > table(df$WRK)
+# 
+# 1    2 
+# 2331 1372 
+
+# Worked last week
+# b .N/A (not reported)
+# 1 .Worked
+# 2 .Did not work
+
+# DECISION: KEEP
+
+df$WRK <- ifelse(is.na(df$WRK), 2, df$WRK)
+table(df$WRK)
+
+
+table(df$GCL)
+# Ask Melanie what she thinks
+# GCL
+# 948
+
+# Grandparents living with grandchildren
+# b .N/A (less than 30 years/institutional GQ)
+# 1 .Yes
+# 2 .No
+
+#DECISION: KEEP
+
+df$GCL <- ifelse(is.na(df$GCL), 9, df$COW)
+
+
+table(df$COW)
+# # COW     
+# 1077
+# 
+# Class of worker
+# b .N/A (less than 16 years old/NILF who last worked more than 5 .years ago or never worked)
+# 1 .Employee of a private for-profit company or business, or of an .individual, for wages, salary, or commissions
+# 2 .Employee of a private not-for-profit, tax-exempt, or .charitable organization
+# 3 .Local government employee (city, county, etc.)
+# 4 .State government employee
+# 5 .Federal government employee
+# 6 .Self-employed in own not incorporated business, professional .practice, or farm
+# 7 .Self-employed in own incorporated business, professional .practice or farm
+# 8 .Working without pay in family business or farm
+# 9 .Unemployed and last worked 5 years ago or earlier or never .worked
+
+# > table(df$COW)
+# 
+# 1     2    3    4     5    6    7    8     9  
+# 1969  501  252  126   58  209  107   11    8
+
+#imputation process
+df$COW <- ifelse(is.na(df$COW), 9, df$COW)
+
+table(df$COW)
+
+table(df$INDP)
+# INDP
+# 1077
+
+# decision: Delete
+
+
+
+
+
+# The Rest of the variables that need deletion:
+
+df <- subset(df, select = -c(OC, PERNP, POVPIP, RC, INDP, OCCP,WKHP, WKWN, MARHM, MARHT, MARHW, MARHYP, JWTRNS, POWPUMA, POWSP))
+# Total number of rows & columns
+dimensions=dim(df)
+cat("Number of rows & columns: ", dimensions)
+
+#Sum of the missing values in each column
+sort(colSums(is.na(df)), decreasing=TRUE)
+
+
+
+
+
+
+
+#method 4: Finding the numerical variables that are highly correlated with each other
 
 
 
