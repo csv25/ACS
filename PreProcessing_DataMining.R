@@ -566,12 +566,7 @@ cat("Number of rows & columns: ", dimensions)
 sort(colSums(is.na(df)), decreasing=TRUE)
 
 
-
-
-
-
-
 #method 4: Finding the numerical variables that are highly correlated with each other
-
+sort(colnames(df))
 
 
