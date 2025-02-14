@@ -68,8 +68,11 @@ df4 <- df3
 df4_var_numerical <- c("SPORDER", "PWGTP" , "MARHYP", "WAGP" , "WKHP" , "PERNP", "PINCP" , "POVPIP") 
 df4[df4_var_numerical] <- lapply(df4[df4_var_numerical], as.numeric)
 
+#Steveen: I would like a little bit more of an explanation of what is happening here.
 df4[setdiff(names(df4), df4_var_numerical)] <- lapply(df4[setdiff(names(df4), df4_var_numerical)], as.factor)
 summary(df4) 
+
+
 
 # Step 5 : check and remove outliers 
 df5 <- df4 
@@ -100,6 +103,8 @@ func_outlier <- function(f1) {
   return(ifelse(is.na(f1), FALSE, f1 < lower_bound | f1 > upper_bound))  
 }
 
+#Steveen: This looks interesting, we are using the function whose column is equal to 0?
+# Please, can you elaborate more on the logic here? gracias!
 df5 <- df5[rowSums(sapply(df5_var_numerical, function(col) func_outlier(df5[[col]]))) == 0, ]
 
 colSums(is.na(df5))
@@ -107,18 +112,23 @@ sum(is.na(df5))
 dim(df5) # rows were reduced from 4318 to 3077 
 summary(df5)
 
+
+
 # Step 6 : Imputation for NA values
 df6 <- df5 
 sum(is.na(df6))
 colSums(is.na(df6)) 
 
 func_median <- function(f1) {replace(f1, is.na(f1), median(f1, na.rm = TRUE))}
-  
+
+
+#The function is replacing the max with the mode?
 func_mode <- function(f2) {
   mode <- names(which.max(table(na.omit(f2))))  
   replace(f2, is.na(f2), mode)
 }
 
+#this got a little bit tricky, could you elaborate what is happening below?
 df6_var_numerical <- names(df6)[sapply(df6, is.numeric)]
 df6_var_categorical <- setdiff(names(df6), df6_var_numerical)
 df6[df6_var_categorical] <- lapply(df6[df6_var_categorical], as.factor)
