@@ -194,29 +194,64 @@ sort(colSums(is.na(df)))
 # method 5: Checking for duplicate columns:
 sum(duplicated(df))
 # we have zero duplicated variables
-# 
+
+
+
+
 # method 6: checking data types to see numeric and cathegorical 
-# and see how we can scale them or normalize them
+#so it's easier to remove outliers in numerical variables
 
 str(df)
 summary(df)
-
-df$Class <- ifelse(df$Class=="Yes", 1,0)
-table(df$Class)
-str(df)
-summary(df)
-
 
 #numeric chosen and reviwed by the dictionary 
 # numeric_vars <- c(PWGTP, INTP, RETP, SSP, WAGP, PINCP)
 
-df$PWGTP <- scale(df$PWGTP)
-df$INTP <- scale(df$INTP)
-df$RETP <- scale(df$RETP)
-df$SSP <- scale(df$SSP)
-df$WAGP <- scale(df$WAGP)
-df$PINCP <- scale(df$PINCP)
+remove_outliers_by_iqr <- function(df, columns){
+  for (col in columns){
+    q1 <- quantile(df[[col]], 0.20, na.rm = TRUE)
+    q3 <- quantile(df[[col]], 0.80, na.rm = TRUE)
+    
+    #checking the IQR
+    iqr <- q3-q1
+    
+    #setting upper and lower bounds
+    upper_bound = q3 +(1.5*iqr)
+    lower_bound = q1 -(1.5*iqr)
+    
+    #removing rows that do not meet the threshold
+    df <- df[df[[col]] >= lower_bound & df[[col]]<= upper_bound,]
+  }
+  
+  return(df)
+}
 
+numeric_vars <- c("SPORDER", "PWGTP", "INTP", "WAGP", "PINCP")
+#removed SSP and RETP because I don't wan it to remove the actual numbers
+#that were reported when they reviece money 
+plot(df$RETP)
+plot(df$SSP)
+plot(df$WAGP)
+plot(df$PINCP)
+
+#sending the variables to the function
+df <- remove_outliers_by_iqr(df, numeric_vars)
+df
+
+
+plot(df$PWGTP)
+plot(df$INTP)
+plot(df$RETP)
+plot(df$SSP)
+plot(df$WAGP)
+plot(df$PINCP)
 summary(df)
+dim(df)
+#variables to look at
+# SPORDER 
+# INTP
 
-write.csv(df,"scaled_data.csv", row.names = FALSE, col.names = TRUE)
+#method 7: make class a factor so we can use in our ML algorithms to 
+#test precision
+
+#write.csv(df,"cleaned_data.csv", row.names = FALSE, col.names = TRUE)
