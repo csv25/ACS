@@ -254,4 +254,9 @@ dim(df)
 #method 7: make class a factor so we can use in our ML algorithms to 
 #test precision
 
-#write.csv(df,"cleaned_data.csv", row.names = FALSE, col.names = TRUE)
+df$Class <- factor(df$Class)
+is.factor(df$Class)
+levels(df$Class)
+
+write.csv(df,"cleaned_data.csv", row.names = FALSE, col.names = TRUE)
+
