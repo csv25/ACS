@@ -1,13 +1,16 @@
+#libraries imported
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(GGally)
+
+
+
+# ###################################################################
+# Start of the analysis
 # Get content into a data frame
 df <- read.csv("project_data.csv", header=TRUE, sep = ",")
-
-# Printing content of Text File
-#head(df, 5)
-
-
-#Sum of the missing values in each column
-# sort(colSums(is.na(df)), decreasing=TRUE)
-
 
 #Method 1: Remove irrelevant attributes 
 #(e.g., tuple id, sample date)
@@ -26,8 +29,8 @@ df <- subset(df, select = -c(RT,
 
 # Get number of columns in the new dataframe
 columns_2 <- ncol(df)
-cat("Number of columns in the new df:", columns_2, "\n")
-
+cat("Number of columns in the new df:", "\n")
+dim(df)
 #Method 2: -	Remove columns that have more than 50% of ther values missing
 
 missing_counts <- colSums(is.na(df))
@@ -35,7 +38,7 @@ missing_counts
 
 #creating threshold of 50% 
 threshold <- nrow(df)/2
-threshold
+# threshold
 
 #removing columns that do not meet the threshold
 df <- df[,missing_counts <= threshold]
@@ -43,7 +46,7 @@ columns_3 <- ncol(df)
 cat("Number of columns in the new df:", columns_3, "\n")
 
 sorted <- sort(colSums(is.na(df)), decreasing=TRUE)
-sorted
+# sorted
 
 # Total number of rows & columns
 dimensions=dim(df)
@@ -75,8 +78,9 @@ missing_values <- sort(colSums(is.na(df)), decreasing=FALSE)
 print(missing_values)
 
 # The Rest of the variables that need deletion:
+#because of our previous analysis in part1
 
-df <- subset(df, select = -c(COW, GCL, WRK, OC, PERNP, POVPIP, RC, INDP, OCCP,WKHP, WKWN, MARHM, MARHT, MARHW, MARHYP, JWTRNS, POWPUMA, POWSP))
+df <- subset(df, select = -c(SPORDER, COW, GCL, WRK, OC, PERNP, POVPIP, RC, INDP, OCCP,WKHP, WKWN, MARHM, MARHT, MARHW, MARHYP, JWTRNS, POWPUMA, POWSP))
 # Total number of rows & columns
 dimensions=dim(df)
 cat("Number of rows & columns: ", dimensions)
@@ -89,9 +93,12 @@ sort(colSums(is.na(df)), decreasing=TRUE)
 sort(colnames(df))
 sort(colSums(is.na(df)))
 
+# NWAB     NWAV     NWLA     NWLK      ESR      MIL 
+# 58       58       58       58       58      108
+
 #checking mil
 table(df$MIL)
-#mode
+# checking the mode of values
 names(sort(-table(df$MIL)))[1]
 summary(df$MIL)
 #Mil is a variable that is not time sensitive
@@ -210,8 +217,8 @@ summary(df)
 
 remove_outliers_by_iqr <- function(df, columns){
   for (col in columns){
-    q1 <- quantile(df[[col]], 0.25, na.rm = TRUE)
-    q3 <- quantile(df[[col]], 0.75, na.rm = TRUE)
+    q1 <- quantile(df[[col]], 0.20, na.rm = TRUE)
+    q3 <- quantile(df[[col]], 0.80, na.rm = TRUE)
     
     #checking the IQR
     iqr <- q3-q1
@@ -226,7 +233,6 @@ remove_outliers_by_iqr <- function(df, columns){
   
   return(df)
 }
-
 numeric_vars <- c("PWGTP", "WAGP", "PINCP")
 #removed SSP and RETP because I don't wan it to remove the actual numbers
 #that were reported when they reviece money 
@@ -237,7 +243,7 @@ plot(df$PINCP)
 
 #sending the variables to the function
 df <- remove_outliers_by_iqr(df, numeric_vars)
-df
+# df commented this to not have so much content in the console
 
 
 plot(df$PWGTP)
@@ -254,74 +260,48 @@ dim(df)
 
 #method 7: make class a factor so we can use in our ML algorithms to 
 #test precision
-
+df$Class <- ifelse(df$Class == "Yes", 1,0)
 df$Class <- factor(df$Class)
 is.factor(df$Class)
 levels(df$Class)
 
-#reading file
-# Load necessary package
-library(caret)
-
-# df <- read.csv("cleaned_data.csv", header = TRUE, sep = ",")
-df <- subset(df, select = -c(INTP))
 dim(df)
+write.csv(df, "df_cleaned.csv", row.names = TRUE)
 
-# Set a random seed for reproducibility
-set.seed(42)
+###########################################################################
+# Visualizations:
 
-# Split data: 70% training, 30% testing
-split_index <- createDataPartition(df$Class, p = 0.7, list = FALSE)
+all_vars_summary <- df %>%
+  select(where(is.numeric)) %>%  # Keep only numeric columns
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
 
-# Create training and testing datasets
-train_data <- df[split_index, ]
-test_data <- df[-split_index, ]
+ggplot(all_vars_summary, aes(x=Variable, y=Value))+
+  geom_boxplot(fill="steelblue", alpha=0.7, outlier.color = 'red')+
+  coord_flip() + #to see and read the values better
+  theme_minimal()+
+  labs(title="Boxplot of all variables in the clean dataset", x="Variable", y="Value")
 
-# Print dimensions to verify
-print(dim(train_data))  # Should be ~70% of df
-print(dim(test_data))   # Should be ~30% of df
+#Vizualizing correlation for all numeric variables
+# ggpairs(df %>% select(where(is.numeric)) %>% select(1:5))  # First 5 numeric columns
+# 
+# ggpairs(df %>% select(where(is.numeric)))
 
-# Train the SVM model
-svm_model <- svm(Class ~ ., data = train_data, kernel = "linear", cost = 1)
-
-# Print model details
-print(svm_model)
-
-# Make predictions on the test set
-svm_predictions <- predict(svm_model, newdata = test_data)
-
-# Print first few predictions
-head(svm_predictions)
-
-# Load caret package (if not already loaded)
-library(caret)
-
-# Create confusion matrix
-conf_matrix <- confusionMatrix(svm_predictions, test_data$Class)
-
-# Print confusion matrix
-print(conf_matrix)
+# library(corrplot)
+# # (1). Show the correlation matrix (with all four variables).
+# cor_data = cor(df %>% select(where(is.numeric)))
+# head(round(M,2))
+# 
+# print("Correlation Matrix (with all four variables):")
+# print(cor_data)
+# 
+# # as numbers
+# corrplot(cor_data, method="number")
+# 
+# 
+# # as colour
+# corrplot(cor_data, method="color")
+# 
 
 
-#trying out cfs from class
-bone.marrow.boruta <- Boruta(Class ~ ., data = df, doTrace = 2, maxRuns = 50)
-bone.marrow.boruta
-getSelectedAttributes(bone.marrow.boruta)
-plot(bone.marrow.boruta)
-bone.marrow.boruta <- TentativeRoughFix(bone.marrow.boruta)
-print(getSelectedAttributes(bone.marrow.boruta))
 
-#running melanies code
-# df7_cleaned.csv
 
-df7 <- read.csv("df7_cleaned.csv", header = TRUE, sep = ',')
-# df7
-
-df7$Class <- as.factor(df7$Class)
-
-bone.marrow.boruta <- Boruta(Class ~ ., data = df7, doTrace = 2, maxRuns = 50)
-bone.marrow.boruta
-getSelectedAttributes(bone.marrow.boruta)
-plot(bone.marrow.boruta)
-bone.marrow.boruta <- TentativeRoughFix(bone.marrow.boruta)
-print(getSelectedAttributes(bone.marrow.boruta))
