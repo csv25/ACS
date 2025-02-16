@@ -76,6 +76,7 @@ table(df$RACNH)
 # GCL        38.647059    0.04631774   FALSE  TRUE
 
 table(df$GCL)
+plot(df$GCL)
 
 # Grandparents living with grandchildren
 # b .N/A (less than 30 years/institutional GQ)
@@ -273,7 +274,7 @@ cat("Number of rows & columns: ", dimensions)
 
 #let's export this dataframe to excel to see patterns and variables
 
-write.csv(df,"filtered_data.csv", row.names = FALSE, col.names = TRUE)
+#write.csv(df,"filtered_data.csv", row.names = FALSE, col.names = TRUE)
 
 #Sum of the missing values in each column
 missing_values <- sort(colSums(is.na(df)), decreasing=FALSE)

@@ -91,6 +91,7 @@ sort(colSums(is.na(df)))
 
 #checking mil
 table(df$MIL)
+#mode
 names(sort(-table(df$MIL)))[1]
 summary(df$MIL)
 #Mil is a variable that is not time sensitive
@@ -209,8 +210,8 @@ summary(df)
 
 remove_outliers_by_iqr <- function(df, columns){
   for (col in columns){
-    q1 <- quantile(df[[col]], 0.20, na.rm = TRUE)
-    q3 <- quantile(df[[col]], 0.80, na.rm = TRUE)
+    q1 <- quantile(df[[col]], 0.25, na.rm = TRUE)
+    q3 <- quantile(df[[col]], 0.75, na.rm = TRUE)
     
     #checking the IQR
     iqr <- q3-q1
@@ -226,7 +227,7 @@ remove_outliers_by_iqr <- function(df, columns){
   return(df)
 }
 
-numeric_vars <- c("SPORDER", "PWGTP", "INTP", "WAGP", "PINCP")
+numeric_vars <- c("PWGTP", "WAGP", "PINCP")
 #removed SSP and RETP because I don't wan it to remove the actual numbers
 #that were reported when they reviece money 
 plot(df$RETP)
@@ -240,7 +241,7 @@ df
 
 
 plot(df$PWGTP)
-plot(df$INTP)
+# plot(df$INTP)
 plot(df$RETP)
 plot(df$SSP)
 plot(df$WAGP)
@@ -263,7 +264,7 @@ levels(df$Class)
 library(caret)
 
 # df <- read.csv("cleaned_data.csv", header = TRUE, sep = ",")
-df <- subset(df, select = -c(SPORDER, INTP))
+df <- subset(df, select = -c(INTP))
 dim(df)
 
 # Set a random seed for reproducibility
@@ -301,3 +302,26 @@ conf_matrix <- confusionMatrix(svm_predictions, test_data$Class)
 # Print confusion matrix
 print(conf_matrix)
 
+
+#trying out cfs from class
+bone.marrow.boruta <- Boruta(Class ~ ., data = df, doTrace = 2, maxRuns = 50)
+bone.marrow.boruta
+getSelectedAttributes(bone.marrow.boruta)
+plot(bone.marrow.boruta)
+bone.marrow.boruta <- TentativeRoughFix(bone.marrow.boruta)
+print(getSelectedAttributes(bone.marrow.boruta))
+
+#running melanies code
+# df7_cleaned.csv
+
+df7 <- read.csv("df7_cleaned.csv", header = TRUE, sep = ',')
+# df7
+
+df7$Class <- as.factor(df7$Class)
+
+bone.marrow.boruta <- Boruta(Class ~ ., data = df7, doTrace = 2, maxRuns = 50)
+bone.marrow.boruta
+getSelectedAttributes(bone.marrow.boruta)
+plot(bone.marrow.boruta)
+bone.marrow.boruta <- TentativeRoughFix(bone.marrow.boruta)
+print(getSelectedAttributes(bone.marrow.boruta))
