@@ -486,6 +486,7 @@ table(df$RC)
 
 
 table(df$WRK)
+summary(df$WRK)
 #WRK
 #615
 
@@ -506,6 +507,7 @@ table(df$WRK)
 
 
 table(df$GCL)
+summary(df$GCL)
 # Ask Melanie what she thinks
 # GCL
 # 948
@@ -516,11 +518,12 @@ table(df$GCL)
 # 2 .No
 
 #DECISION: KEEP
-
-df$GCL <- ifelse(is.na(df$GCL), 9, df$COW)
+# 
+# df$GCL <- ifelse(is.na(df$GCL), 9, df$COW)
 
 
 table(df$COW)
+summary(df$COW)
 # # COW     
 # 1077
 # 

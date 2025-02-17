@@ -34,16 +34,17 @@ dim(df)
 #Method 2: -	Remove columns that have more than 50% of ther values missing
 
 missing_counts <- colSums(is.na(df))
-missing_counts
+sort(missing_counts, decreasing=TRUE)
 
 #creating threshold of 50% 
 threshold <- nrow(df)/2
-# threshold
+threshold
 
 #removing columns that do not meet the threshold
 df <- df[,missing_counts <= threshold]
 columns_3 <- ncol(df)
 cat("Number of columns in the new df:", columns_3, "\n")
+dim(df)
 
 sorted <- sort(colSums(is.na(df)), decreasing=TRUE)
 # sorted
