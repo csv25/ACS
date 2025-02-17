@@ -198,6 +198,7 @@ df$NWAB[is.na(df$NWAB)] <- 2
 
 #let's work with NWAV
 sort(colSums(is.na(df)))
+dim(df)
 #perfect, we now have a strong and clean dataset
 
 # method 5: Checking for duplicate columns:
@@ -212,6 +213,7 @@ sum(duplicated(df))
 
 str(df)
 summary(df)
+outliers_present <- data.frame(df)
 
 #numeric chosen and reviwed by the dictionary 
 # numeric_vars <- c(PWGTP, INTP, RETP, SSP, WAGP, PINCP)
@@ -235,6 +237,7 @@ remove_outliers_by_iqr <- function(df, columns){
   return(df)
 }
 numeric_vars <- c("PWGTP", "WAGP", "PINCP")
+
 #removed SSP and RETP because I don't wan it to remove the actual numbers
 #that were reported when they reviece money 
 plot(df$RETP)
@@ -269,8 +272,24 @@ levels(df$Class)
 dim(df)
 write.csv(df, "df_cleaned.csv", row.names = TRUE)
 
+
+
 ###########################################################################
 # Visualizations:
+
+
+
+vars_with_outliers <- outliers_present %>%
+  select(where(is.numeric)) %>%  # Keep only numeric columns
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
+
+ggplot(vars_with_outliers, aes(x=Variable, y=Value))+
+  geom_boxplot(fill="steelblue", alpha=0.7, outlier.color = 'red')+
+  coord_flip() + #to see and read the values better
+  theme_minimal()+
+  labs(title="Summary of Numerical Variables with Outliers", x="Variable", y="Value")
+
+
 
 all_vars_summary <- df %>%
   select(where(is.numeric)) %>%  # Keep only numeric columns
@@ -280,7 +299,7 @@ ggplot(all_vars_summary, aes(x=Variable, y=Value))+
   geom_boxplot(fill="steelblue", alpha=0.7, outlier.color = 'red')+
   coord_flip() + #to see and read the values better
   theme_minimal()+
-  labs(title="Boxplot of all variables in the clean dataset", x="Variable", y="Value")
+  labs(title="Summary of Numerical Variables No Outliers", x="Variable", y="Value")
 
 #Vizualizing correlation for all numeric variables
 # ggpairs(df %>% select(where(is.numeric)) %>% select(1:5))  # First 5 numeric columns
