@@ -279,20 +279,20 @@ write.csv(df, "df_cleaned.csv", row.names = TRUE)
 
 ######################################## APPROACH # 2 :
 
-df_approach2 <- read.csv("project_data.csv", header=TRUE, sep = ",")
+df <- read.csv("project_data.csv", header=TRUE, sep = ",")
 head(df_approach2)  
 
 ## Initial data exploration : 
-dim(df_approach2) 
-str(df_approach2)
+dim(df) 
+str(df)
 
-n_miss(df_approach2) 
-prop_miss(df_approach2)
+n_miss(df) 
+prop_miss(df)
 
-summary(df_approach2) 
+summary(df) 
 
 # Step 1 - Identifying and Reducing Low-Variance Variables:
-df1 <- df_approach2  
+df1 <- df  
 zerovar <- nearZeroVar(df1, names = TRUE) 
 print(zerovar) 
 
