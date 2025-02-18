@@ -223,8 +223,8 @@ outliers_present <- data.frame(df)
 
 remove_outliers_by_iqr <- function(df, columns){
   for (col in columns){
-    q1 <- quantile(df[[col]], 0.20, na.rm = TRUE)
-    q3 <- quantile(df[[col]], 0.80, na.rm = TRUE)
+    q1 <- quantile(df[[col]], 0.25, na.rm = TRUE)
+    q3 <- quantile(df[[col]], 0.75, na.rm = TRUE)
     
     #checking the IQR
     iqr <- q3-q1
@@ -261,9 +261,15 @@ plot(df$WAGP)
 plot(df$PINCP)
 summary(df)
 dim(df)
-#variables to look at
-# SPORDER 
-# INTP
+
+########################
+#(.20,.80) ratios in dimensions
+# [1] 3818   45
+#rows lost: 12%
+#(.25,.75) ratios in dimensions
+# 3632   45
+#rows lost: 16%
+
 
 #method 7: make class a factor so we can use in our ML algorithms to 
 #test precision
