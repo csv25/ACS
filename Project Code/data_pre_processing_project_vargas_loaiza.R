@@ -59,7 +59,7 @@ cat("Number of rows & columns: ", dimensions)
 #method 3: Removing values that have near zero variance
 # in the data set apart from the ones that we have already removed
 
-# df_zv <- nearZeroVar(df, saveMetrics = TRUE)
+df_zv <- nearZeroVar(df, saveMetrics = TRUE)
 # df_zv
 
 #now let's sort the variables that show true for Zerovar and nzv
