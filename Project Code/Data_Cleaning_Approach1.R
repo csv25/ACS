@@ -1,3 +1,5 @@
+############################################### APPROACH #1
+
 #libraries imported
 
 library(tidyverse)
@@ -270,6 +272,8 @@ is.factor(df$Class)
 levels(df$Class)
 
 dim(df)
+colnames(df)
+
 write.csv(df, "df_cleaned.csv", row.names = TRUE)
 
 
