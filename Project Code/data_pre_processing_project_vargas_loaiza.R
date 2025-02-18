@@ -281,7 +281,7 @@ levels(df$Class)
 dim(df)
 colnames(df)
 
-write.csv(df, "df_cleaned.csv", row.names = TRUE)
+write.csv(df, "df_approach1_cleaned.csv", row.names = TRUE)
 
 ######################################## APPROACH # 2 :
 
@@ -537,6 +537,9 @@ dim(df7)
 summary(df7)
 str(df7)
 colnames(df7) 
+
+write.csv(df7, "df_approach2_cleaned.csv", row.names = TRUE)
+
 
 
 
