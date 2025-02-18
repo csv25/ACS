@@ -208,9 +208,6 @@ dim(df)
 sum(duplicated(df))
 # we have zero duplicated variables
 
-
-
-
 # method 6: checking data types to see numeric and cathegorical 
 #so it's easier to remove outliers in numerical variables
 
@@ -286,7 +283,7 @@ write.csv(df, "df_approach1_cleaned.csv", row.names = TRUE)
 ######################################## APPROACH # 2 :
 
 df <- read.csv("project_data.csv", header=TRUE, sep = ",")
-head(df_approach2)  
+head(df)  
 
 ## Initial data exploration : 
 dim(df) 
@@ -539,8 +536,4 @@ str(df7)
 colnames(df7) 
 
 write.csv(df7, "df_approach2_cleaned.csv", row.names = TRUE)
-
-
-
-
 
