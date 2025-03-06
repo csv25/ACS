@@ -1,4 +1,4 @@
-RFE - Smote 
+SMOTE - RFE ((Recursive Feature Elimination)
 
 # Working directory - Setting/Getting
 getwd()
@@ -64,7 +64,7 @@ dim(df1)
 str(df1)
 summary(df1)   
 miss_var_summary(df1) %>% print(n = Inf) 
-
+ 
 ##### ##### ##### ##### IMPUTATION :  
 df2 <- df1 
 
@@ -160,18 +160,17 @@ colnames(trainData_SMOTE)[ncol(trainData_SMOTE)] <- "Class"
 trainData_SMOTE$Class <- as.factor(trainData_SMOTE$Class)
 table(trainData_SMOTE$Class) 
 
-##### ##### ##### ##### ##### #####  BORUTA  
-library(Boruta)
+##### ##### ##### ##### ##### #####  RFE  
 set.seed(123)
-
-boruta_model <- Boruta(Class ~ ., data = trainData_SMOTE, doTrace = 0)
-selected_features_boruta <- getSelectedAttributes(boruta_model, withTentative = FALSE)
-print(selected_features_boruta)
-
+rfe_control <- rfeControl(functions = rfFuncs, method = "cv", number = 5)
+rfe_model <- rfe(trainData_SMOTE[, -ncol(trainData_SMOTE)], trainData_SMOTE$Class,
+                 sizes = c(5, 10, 15, 20), rfeControl = rfe_control)
+selected_features_rfe <- predictors(rfe_model) 
+print(selected_features_rfe) 
 
 testData <- testData %>% mutate(across(-Class, as.numeric))
 testData[var_numeric_test] <- scale(testData[var_numeric_test])
-testData_selected <- testData[, c(selected_features_boruta, "Class")] 
+testData_selected <- testData[, c(selected_features_rfe, "Class")] 
 
 #print(testData_selected)
 #dim(testData_selected)
@@ -180,23 +179,24 @@ testData_selected <- testData[, c(selected_features_boruta, "Class")]
 library(randomForest) 
 
 # 1 . 
-rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                          ntree = 500,  importance = TRUE)
 
 # 2. 
-rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")],
+rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
                          ntree = 1000, importance = TRUE, classwt = c(1, 5))  
 
 # 3. 
-rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                          ntree = 1500, importance = TRUE, classwt = c(1, 10))
 
 # 4. 
-rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                          ntree = 1000, importance = TRUE, sampsize = c(500, 500))  
 
+
 print(rf_model)
-rf_train_predictions <- predict(rf_model, trainData_SMOTE[, c(selected_features_boruta, "Class")])
+rf_train_predictions <- predict(rf_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
 rf_train_cm <- confusionMatrix(rf_train_predictions, trainData_SMOTE$Class)
 rf_train_cm 
 
@@ -207,18 +207,18 @@ rf_test_cm
 ##### #####  2. LOGISTIC REGRESSION 
 
 # 1. Best-accuracy : 
-lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")],
+lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
                   method = "glm",
                   family = "binomial",
                   trControl = trainControl(method = "cv", number = 5))
 # 2. 
-lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                   method = "glm", 
                   family = "binomial",
                   trControl = trainControl(method = "cv", number = 5),
                   weights = ifelse(trainData_SMOTE$Class == 0, 1.5, 1)) 
 # 3. 
-lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                   method = "glm", 
                   family = "binomial",
                   trControl = trainControl(method = "cv", number = 5),
@@ -227,7 +227,7 @@ lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta
 varImp(lr_model)
 
 print(lr_model)
-lr_train_predictions <- predict(lr_model, trainData_SMOTE[, c(selected_features_boruta, "Class")])
+lr_train_predictions <- predict(lr_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
 lr_train_cm <- confusionMatrix(lr_train_predictions, trainData_SMOTE$Class)
 lr_train_cm 
 
@@ -266,12 +266,12 @@ library(UBL)
 #rf_balanced_model <- randomForest(Class ~ ., data = balanced_data, ntree = 1000)
 
 # 1. 
-rf_balanced_model <- ranger(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+rf_balanced_model <- ranger(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                             num.trees = 500, class.weights = c(1, 2))
 
 # 2. 
 rf_balanced_model <- randomForest(Class ~ ., data = trainData_SMOTE, 
-                                  ntree = 1000, importance = TRUE, sampsize = c(500, 500))  
+                         ntree = 1000, importance = TRUE, sampsize = c(500, 500))  
 
 # 3. 
 rf_balanced_model <- randomForest(Class ~ ., 
@@ -290,7 +290,7 @@ rf_balanced_model <- randomForest(Class ~ .,
 
 print(rf_balanced_model)
 
-rf_balanced_train_predictions <- predict(rf_balanced_model, trainData_SMOTE[, c(selected_features_boruta, "Class")])
+rf_balanced_train_predictions <- predict(rf_balanced_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
 rf_balanced_train_cm <- confusionMatrix(rf_balanced_train_predictions, trainData_SMOTE$Class)
 rf_balanced_train_cm
 
@@ -301,14 +301,14 @@ rf_balanced_test_cm
 ##### #####  4.  SUPPORT VECTOR MACHINE 
 library(e1071)
 
-svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                  kernel = "radial", 
                  cost = 1, 
                  probability = TRUE)
 
 print(svm_model)
 
-svm_train_predictions <- predict(svm_model, trainData_SMOTE[, c(selected_features_boruta, "Class")])
+svm_train_predictions <- predict(svm_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
 svm_train_cm <- confusionMatrix(svm_train_predictions, trainData_SMOTE$Class)
 svm_train_cm
 
@@ -320,17 +320,17 @@ svm_test_cm
 library(e1071)
 
 # 1. 
-nb_model <- naiveBayes(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")])
+nb_model <- naiveBayes(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")])
 
 # 2. 
-nb_model <- naiveBayes(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], usekernel = TRUE)
-
+nb_model <- naiveBayes(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], usekernel = TRUE)
+ 
 # 3. 
-nb_model <- naiveBayes(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], laplace = 1)
-
+nb_model <- naiveBayes(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], laplace = 1)
+ 
 print(nb_model)
 
-nb_train_predictions <- predict(nb_model, trainData_SMOTE[, c(selected_features_boruta, "Class")], type = "class")
+nb_train_predictions <- predict(nb_model, trainData_SMOTE[, c(selected_features_rfe, "Class")], type = "class")
 nb_train_cm <- confusionMatrix(nb_train_predictions, trainData_SMOTE$Class)
 nb_train_cm
 
@@ -341,11 +341,11 @@ nb_test_cm
 ##### #####  6.  NEURAL NETWORKS 
 library(nnet)
 
-nn_model <- nnet(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+nn_model <- nnet(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                  size = 10, decay = 0.01, maxit = 200)
 print(nn_model)
 
-nn_train_predictions <- predict(nn_model, trainData_SMOTE[, c(selected_features_boruta, "Class")])
+nn_train_predictions <- predict(nn_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
 nn_train_predictions <- ifelse(nn_train_predictions > 0.5, 1, 0)  
 nn_train_predictions <- as.factor(nn_train_predictions)  
 
@@ -362,11 +362,11 @@ nn_test_cm
 ##### #####  7.  Decision Tree (CART)
 library(rpart)
 
-cart_model <- rpart(Class ~ ., data = trainData_SMOTE[, c(selected_features_boruta, "Class")], 
+cart_model <- rpart(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                     method = "class", control = rpart.control(cp = 0.01))
 print(cart_model)
 
-cart_train_predictions <- predict(cart_model, trainData_SMOTE[, c(selected_features_boruta, "Class")], type = "class")
+cart_train_predictions <- predict(cart_model, trainData_SMOTE[, c(selected_features_rfe, "Class")], type = "class")
 cart_train_cm <- confusionMatrix(cart_train_predictions, trainData_SMOTE$Class)
 cart_train_cm
 
@@ -377,8 +377,8 @@ cart_test_cm
 ##### #####  8.  KNN
 library(class)
 
-knn_predictions <- knn(train = trainData_SMOTE[, selected_features_boruta], 
-                       test = testData_selected[, selected_features_boruta], 
+knn_predictions <- knn(train = trainData_SMOTE[, selected_features_rfe], 
+                       test = testData_selected[, selected_features_rfe], 
                        cl = trainData_SMOTE$Class, k = 5)
 
 knn_test_cm <- confusionMatrix(knn_predictions, testData_selected$Class)
@@ -387,9 +387,9 @@ knn_test_cm
 ##### #####  9.  XGBoost (Extreme Gradient Boosting)
 library(xgboost)
 
-train_matrix <- xgb.DMatrix(data = as.matrix(trainData_SMOTE[, selected_features_boruta]), 
+train_matrix <- xgb.DMatrix(data = as.matrix(trainData_SMOTE[, selected_features_rfe]), 
                             label = as.numeric(trainData_SMOTE$Class) - 1)
-test_matrix <- xgb.DMatrix(data = as.matrix(testData_selected[, selected_features_boruta]))
+test_matrix <- xgb.DMatrix(data = as.matrix(testData_selected[, selected_features_rfe]))
 
 xgb_params <- list(
   objective = "binary:logistic",
