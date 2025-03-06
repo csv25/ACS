@@ -26,7 +26,7 @@ n_miss(df)
 prop_miss(df)
 summary(df)  
 
-##### ##### ##### ##### MISSING VALUES :  
+##### ##### ##### ##### HANDLING MISSING VALUES :  
 df1 <- df
 miss_var_summary(df1) %>%
   arrange(desc(pct_miss)) %>%  
@@ -53,7 +53,7 @@ n_miss(df1)
 prop_miss(df1) 
 miss_var_summary(df1) %>% print(n = Inf)
 
-##### ##### ##### ##### LOW VARIANCE :  
+##### ##### ##### ##### CHECKING FOR LOW VARIANCE :  
 zerovar <- nearZeroVar(df1, names = TRUE) 
 print(zerovar) 
 
@@ -142,8 +142,8 @@ prop_miss(testData)
 
 ##### ##### SMOTE AND FEATURE SELECTION :
 #Synthetic Minority Oversampling Technique
-#We want to use this method to address the class imbalance
-# in our data set by generating random synthetic data points for our minority class
+#We want to use this method to address the class imbalance in our data 
+#by generating random synthetic data points for our minority class.
 
 library(smotefamily) 
 
@@ -203,7 +203,21 @@ testData_selected <- testData[, c(selected_features_rfe, "Class")]
 #dim(testData_selected)
 
 ##### #####  1. RANDOM FOREST 
-library(randomForest) 
+library(randomForest)
+#Hyper Parameters:
+# ntree:Number of trees to grow. 
+# This should not be set to too small a number, to ensure that every input row gets predicted at least a few times.
+
+# importance: Should importance of predictors be assessed?
+
+# classwt: Priors of the classes. Need not add up to one. Ignored for regression.
+
+# sampsize: Size(s) of sample to draw. 
+# For classification, if sampsize is a vector of the length the number of strata, then sampling is stratified by strata, 
+# and the elements of sampsize indicate the numbers to be drawn from the strata.
+
+# Comment: I think we should remane our models here because everytime we run them they are just getting replaced
+# by the previous one and we are losing our results.
 
 # 1 . 
 rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
@@ -262,7 +276,8 @@ lr_test_predictions <- predict(lr_model, testData_selected)
 lr_test_cm <- confusionMatrix(lr_test_predictions, testData_selected$Class)
 lr_test_cm 
 
-# Replacing the threshold :   
+# Replacing the threshold : 
+# Steveen: What happened that we decided to replace the threshold?
 lr_test_probabilities <- predict(lr_model, testData_selected, type = "prob")
 lr_test_predictions <- ifelse(lr_test_probabilities[,2] > 0.45, 1, 0)  
 lr_test_predictions <- as.factor(lr_test_predictions)
@@ -291,6 +306,10 @@ library(UBL)
 #balanced_tomek_result <- TomekClassif(Class ~ ., balanced_smote)
 #balanced_data <- balanced_tomek_result[[1]]
 #rf_balanced_model <- randomForest(Class ~ ., data = balanced_data, ntree = 1000)
+
+
+# Steveen: Same thing here, I think we should rename the name of the rf_balanced_model
+
 
 # 1. 
 rf_balanced_model <- ranger(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
@@ -326,7 +345,18 @@ rf_balanced_test_cm <- confusionMatrix(rf_balanced_test_predictions, testData_se
 rf_balanced_test_cm 
 
 ##### #####  4.  SUPPORT VECTOR MACHINE 
+# Documentation: https://www.rdocumentation.org/packages/e1071/versions/1.7-16/topics/svm
 library(e1071)
+#Different parameters to try: 
+
+# Kernel: Linear, polynomial, radial, sigmoid
+# gamma: parameter needed for all kernels except linear
+# type: "C-classification" , "eps-regression", 'nu-classification','one-classification (for novelty detection)', 'eps-regression', 'nu-regression'
+# deggree: parameter needed for kernel of type polynomial
+# coef0: parameter needed for kernels of type polynomial and sigmoid (default: 0)
+# class.weights: a named vector of weights for the different classes, used for asymmetric class sizes. 
+# Not all factor levels have to be supplied (default weight: 1). All components have to be named. 
+# Specifying "inverse" will choose the weights inversely proportional to the class distribution.
 
 svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                  kernel = "radial", 
@@ -344,6 +374,8 @@ svm_test_cm <- confusionMatrix(svm_test_predictions, testData_selected$Class)
 svm_test_cm
 
 ##### #####  5.  NAIVE BAYES 
+# Documentation: https://cran.r-project.org/web/packages/e1071/e1071.pdf
+
 library(e1071)
 
 # 1. 
@@ -365,7 +397,9 @@ nb_test_predictions <- predict(nb_model, testData_selected)
 nb_test_cm <- confusionMatrix(nb_test_predictions, testData_selected$Class)
 nb_test_cm
 
-##### #####  6.  NEURAL NETWORKS 
+##### #####  6.  NEURAL NETWORKS
+# Documentation: https://cran.r-project.org/web/packages/nnet/nnet.pdf
+
 library(nnet)
 
 nn_model <- nnet(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
