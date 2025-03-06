@@ -3,6 +3,7 @@ getwd()
 # Set working directory
 # setwd('/Users/melanieloaiza/Desktop/BU - Data Science /Spring 2025/MET CS699 - Data Mining/project_assignment')
 
+getwd()
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### PACKAGES :   
 library(naniar)  
 library(caret)
@@ -139,7 +140,11 @@ prop_miss(trainData)
 n_miss(testData) 
 prop_miss(testData) 
 
-##### ##### SMOTE AND FEATURE SELECTION : 
+##### ##### SMOTE AND FEATURE SELECTION :
+#Synthetic Minority Oversampling Technique
+#We want to use this method to address the class imbalance
+# in our data set by generating random synthetic data points for our minority class
+
 library(smotefamily) 
 
 # SMOTE
@@ -156,18 +161,42 @@ trainData_SMOTE <- smote_result$data
 colnames(trainData_SMOTE)[ncol(trainData_SMOTE)] <- "Class"
 
 trainData_SMOTE$Class <- as.factor(trainData_SMOTE$Class)
+#Dimentions of the class variable after SMOTE
 table(trainData_SMOTE$Class) 
 
-##### ##### ##### ##### ##### #####  RFE  
+##### ##### ##### ##### ##### #####  RFE
+#Recursive Feature Elimination: This selects the 
+#most important features from the balanced data set created by
+#SMOTE. This process happens recursively. 
+
 set.seed(123)
 rfe_control <- rfeControl(functions = rfFuncs, method = "cv", number = 5)
+#rfFuncs:Uses random forests method of assessing the mean decrease in accuracy over 
+#the features of interest i.e. the x (independent variables) and through the recursive 
+#nature of the algorithm looks at which IVs have the largest affect on the mean decrease 
+#in accuracy for the predicted y. The algorithm then purges the features with a low feature 
+#importance, those that have little effect on changing this accuracy metric.
+#cv: Cross Validation
+# Number = 5 Fold Cross Validation
+
 rfe_model <- rfe(trainData_SMOTE[, -ncol(trainData_SMOTE)], trainData_SMOTE$Class,
                  sizes = c(5, 10, 15, 20), rfeControl = rfe_control)
-selected_features_rfe <- predictors(rfe_model) 
-print(selected_features_rfe) 
 
+# trainData_SMOTE[, -ncol(trainData_SMOTE)]: All classes except the last (class) 
+# trainData_SMOTE$Class: Target Variable
+# sizes = c(5, 10, 15, 20): Breaks it down by subset and chooses the most important features in that particular subset saves the variables
+# rfeControl = rfe_control: Applies the control settings defied earlier (random forest + cv))
+
+selected_features_rfe <- predictors(rfe_model) 
+print(selected_features_rfe)
+#Number of important variables:
+length(selected_features_rfe)
+
+#Converting all features into numeric type except "Class"
 testData <- testData %>% mutate(across(-Class, as.numeric))
+#Scaling data so they have a mean of 0 and a SD of 1
 testData[var_numeric_test] <- scale(testData[var_numeric_test])
+# We are creating new dataset that only contains features selected from RFE + target variable
 testData_selected <- testData[, c(selected_features_rfe, "Class")] 
 
 #print(testData_selected)
