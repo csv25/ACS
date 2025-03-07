@@ -359,6 +359,8 @@ library(e1071)
 # Specifying "inverse" will choose the weights inversely proportional to the class distribution.
 # quiero ver que podemos mejorar en los accuracy readings
 
+# test
+
 svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                  kernel = "radial", 
                  cost = 1, 
