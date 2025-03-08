@@ -149,15 +149,23 @@ library(smotefamily)
 
 # SMOTE
 set.seed(123)
+#Dividing dataframe between features
+
+#data frame or matrix of numeric-attributed dataset
 X <- trainData[, -which(names(trainData) == "Class")]
+#Making the dataframe all numeric variables
 X <- as.data.frame(lapply(X, as.numeric))
 
+# A vector of a target class attribute corresponding to a dataset X
 Y <- trainData$Class
+# We will use this Y later 
 Y <- trainData$Class
 
 smote_result <- SMOTE(X, Y, K = 5)
+typeof(smote_result)
 
 trainData_SMOTE <- smote_result$data
+dim(trainData_SMOTE)
 colnames(trainData_SMOTE)[ncol(trainData_SMOTE)] <- "Class"
 
 trainData_SMOTE$Class <- as.factor(trainData_SMOTE$Class)
@@ -220,20 +228,29 @@ library(randomForest)
 # by the previous one and we are losing our results.
 
 # 1 . 
-rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
-                         ntree = 500,  importance = TRUE)
+# rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
+#                          ntree = 500,  importance = TRUE)
 
-# 2. 
+# 2.
+# rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
+#                          ntree = 1000, importance = TRUE, classwt = c(1, 5))
+# 
+# # 3. The best it gets for random forests with these parameters. 
+# this might be the best accuracy we can get in random forest
 rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
-                         ntree = 1000, importance = TRUE, classwt = c(1, 5))  
+                         ntree = 1500, 
+                         importance = TRUE, 
+                         classwt = c(1, 10),
+                         maxnodes = 300,
+                         replace = FALSE)
+# # 
 
-# 3. 
-rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
-                         ntree = 1500, importance = TRUE, classwt = c(1, 10))
-
-# 4. 
-rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
-                         ntree = 1000, importance = TRUE, sampsize = c(500, 500))  
+# 4 
+# rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
+#                          ntree = 2000, importance = TRUE, classwt = c(1, 15))
+# 5.
+# rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
+#                          ntree = 1000, importance = TRUE, sampsize = c(500, 500))
 
 
 print(rf_model)
