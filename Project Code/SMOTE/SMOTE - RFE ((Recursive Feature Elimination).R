@@ -263,24 +263,36 @@ rf_test_cm <- confusionMatrix(rf_test_predictions, testData_selected$Class)
 rf_test_cm 
 
 ##### #####  2. LOGISTIC REGRESSION 
-
-# 1. Best-accuracy : 
+# 
+# 1. Best-accuracy :
 lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
                   method = "glm",
                   family = "binomial",
-                  trControl = trainControl(method = "cv", number = 5))
-# 2. 
-lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
-                  method = "glm", 
-                  family = "binomial",
-                  trControl = trainControl(method = "cv", number = 5),
-                  weights = ifelse(trainData_SMOTE$Class == 0, 1.5, 1)) 
-# 3. 
-lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
-                  method = "glm", 
-                  family = "binomial",
-                  trControl = trainControl(method = "cv", number = 5),
-                  weights = ifelse(trainData_SMOTE$Class == 1, 2, 1))
+                  trControl = trainControl(method = "cv", number = 10))
+
+
+# ## editing the best accuracy model
+# lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
+#                   method = "glm",
+#                   family = "binomial",
+#                   trControl = trainControl(method = "cv", number = 5, classProbs = TRUE),
+#                   metric = "ROC")
+
+
+
+                  
+# # 2. 
+# lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
+#                   method = "glm",
+#                   family = "binomial",
+#                   trControl = trainControl(method = "cv", number = 5),
+#                   weights = ifelse(trainData_SMOTE$Class == 0, 1.5, 1))
+# # 3. 
+# lr_model <- train(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
+#                   method = "glm",
+#                   family = "binomial",
+#                   trControl = trainControl(method = "cv", number = 5),
+#                   weights = ifelse(trainData_SMOTE$Class == 1, 2, 1))
 
 varImp(lr_model)
 
