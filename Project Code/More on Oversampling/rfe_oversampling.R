@@ -105,6 +105,7 @@ miss_var_summary(df2) %>% print(n = Inf)
 
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### MODEL TRAINING :  
 df3 <- df2 
+
 df3$Class <- ifelse(df3$Class == "Yes", 1, 0)
 df3$Class <- as.factor(df3$Class)
 table(df3$Class)
@@ -119,20 +120,83 @@ print(table(testData$Class))
 
 ##### ##### SMOTE AND FEATURE SELECTION : 
 library(smotefamily) 
-
-# SMOTE
 set.seed(123)
 X <- trainData[, -which(names(trainData) == "Class")]
 X <- as.data.frame(lapply(X, as.numeric))
 
 Y <- trainData$Class
-Y <- trainData$Class
+Y <- as.factor(Y)
+
+################## TESTING PCA 
+#library(ggplot2)
+#library(FactoMineR)
+#library(factoextra)
+
+# Apply PCA on the original dataset
+#pca_original <- PCA(X, graph = FALSE)
+#pca_df_original <- data.frame(pca_original$ind$coord, Class = as.factor(Y))
+
+# Plot the original class distribution
+#ggplot(pca_df_original, aes(x = Dim.1, y = Dim.2, color = Class)) +
+#  geom_point(alpha = 0.7, size = 3) +
+#  labs(title = "Original Dataset (Before SMOTE)", x = "PC1", y = "PC2") +
+#  theme_minimal()
+################## TESTING PCA 
+
+################## TESTING t-SNE  
+# Reduce dimensions using t-SNE before SMOTE
+#tsne_result_before <- Rtsne(X, dims = 2, perplexity = 30, verbose = FALSE)
+#tsne_data_before <- data.frame(tsne_result_before$Y, Class = Y)
+
+# Plot original data
+#ggplot(tsne_data_before, aes(x = X1, y = X2, color = Class)) +
+#  geom_point(size = 2) +
+#  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = 0.3) +
+#  scale_fill_viridis_c() +
+#  ggtitle("Original Data Distribution") +
+#  theme_minimal()
+################## TESTING t-SNE 
 
 smote_result <- SMOTE(X, Y, K = 3)
 trainData_SMOTE <- smote_result$data
 colnames(trainData_SMOTE)[ncol(trainData_SMOTE)] <- "Class"
 trainData_SMOTE$Class <- as.factor(trainData_SMOTE$Class)
-table(trainData_SMOTE$Class)  
+table(trainData_SMOTE$Class)   
+
+## SMOTE BORDERLINE 
+borderline_smote_result <- BLSMOTE(X, Y, K = 5, C = 5, dupSize = 0, method = "type1")
+trainData_SMOTE <- borderline_smote_result$data
+colnames(trainData_SMOTE)[ncol(trainData_SMOTE)] <- "Class"
+trainData_SMOTE$Class <- as.factor(trainData_SMOTE$Class)
+table(trainData_SMOTE$Class)
+
+################## TESTING t-SNE 
+#install.packages("Rtsne")
+#library(Rtsne) 
+#tsne_result <- Rtsne(trainData_SMOTE[, -which(names(trainData_SMOTE) == "Class")], dims = 2, perplexity = 30, verbose = FALSE)
+#tsne_data <- data.frame(tsne_result$Y, Class = trainData_SMOTE$Class)
+
+#ggplot(tsne_data, aes(x = X1, y = X2, color = Class)) +
+#  geom_point(size = 2) +
+#  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = 0.3) +
+#  scale_fill_viridis_c() +
+#  ggtitle("SMOTE-Generated Data Distribution") +
+#  theme_minimal()
+################## TESTING t-SNE 
+
+################## TESTING PCA 
+#library(smotefamily)
+# Apply SMOTE
+X_smote <- trainData_SMOTE[, -which(names(trainData_SMOTE) == "Class")]
+Y_smote <- trainData_SMOTE$Class
+
+pca_smote <- PCA(X_smote, graph = FALSE)
+pca_df_smote <- data.frame(pca_smote$ind$coord, Class = as.factor(Y_smote))
+
+ggplot(pca_df_smote, aes(x = Dim.1, y = Dim.2, color = Class)) +
+  geom_point(alpha = 0.7, size = 3) +
+  labs(title = "Resampled Dataset (After SMOTE)", x = "PC1", y = "PC2") +
+  theme_minimal()
 
 # 2 : 
 set.seed(123)
@@ -152,6 +216,11 @@ str(importance_df)
 top_features <- rownames(importance_df[importance_df$Overall > 5, , drop = FALSE])
 top_features
 
+### Testing data: 
+testData <- testData %>% mutate(across(-Class, as.numeric))
+testData_selected <- testData[, c(selected_features_rfe, "Class")] 
+testData_selected
+
 testData <- testData %>% mutate(across(-Class, as.numeric))
 testData_selected <- testData[, c(top_features, "Class")] 
 testData_selected
@@ -163,7 +232,7 @@ library(e1071)
 nb_model <- naiveBayes(Class ~ ., data = trainData_SMOTE[, c(top_features, "Class")] , laplace = 1 , usekernel = TRUE) ### BEST MODEL  
 print(nb_model)
 
-nb_train_predictions <- predict(nb_model, trainData_SMOTE[, c(selected_features_rfe, "Class")], type = "class")
+nb_train_predictions <- predict(nb_model, trainData_SMOTE[, c(top_features, "Class")], type = "class")
 nb_train_cm <- confusionMatrix(nb_train_predictions, trainData_SMOTE$Class)
 nb_train_cm
 
@@ -177,10 +246,56 @@ nb_test_cm_1
 
 str(nb_test_cm)
 
+##### #####  4.  SUPPORT VECTOR MACHINE 
+library(e1071)
+svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
+                 kernel = "radial", 
+                 cost = 1, 
+                 probability = TRUE)
+
+print(svm_model)
+
+svm_train_predictions <- predict(svm_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
+svm_train_cm <- confusionMatrix(svm_train_predictions, trainData_SMOTE$Class)
+svm_train_cm
+
+svm_test_predictions <- predict(svm_model, testData_selected, probability = TRUE)
+svm_test_cm <- confusionMatrix(svm_test_predictions, testData_selected$Class) 
+svm_test_cm
+
+##### #####  9.  XGBoost (Extreme Gradient Boosting)
+library(xgboost)
+
+train_matrix <- xgb.DMatrix(data = as.matrix(trainData_SMOTE[, top_features]), 
+                            label = as.numeric(trainData_SMOTE$Class) - 1)
+test_matrix <- xgb.DMatrix(data = as.matrix(testData_selected[, top_features]))
+
+xgb_params <- list(
+  objective = "binary:logistic",
+  eval_metric = "auc",
+  scale_pos_weight = sum(trainData_SMOTE$Class == 0) / sum(trainData_SMOTE$Class == 1)
+)
+
+xgb_model <- xgb.train(params = xgb_params, data = train_matrix, nrounds = 200)
+
+xgb_test_predictions <- predict(xgb_model, test_matrix)
+xgb_class <- ifelse(xgb_test_predictions > 0.5, 1, 0)
+
+xgb_test_cm <- confusionMatrix(factor(xgb_class), testData_selected$Class)
+xgb_test_cm
+
+
+
+
+
+
+
+
 ## Printing the results 
 extract_measures <- function(conf_matrix) {
   by_class <- conf_matrix$byClass
-  mcc <- ifelse("MCC" %in% names(by_class), by_class["MCC"], NA)
+  overall <- conf_matrix$overall 
+  mcc <- ifelse("MCC" %in% names(by_class), by_class["MCC"], 0)
   
   measures <- c(
     by_class["Sensitivity"],  
@@ -218,7 +333,6 @@ performance_measures_df <- data.frame(
 )
 
 print(performance_measures_df)
-
 
 
 
