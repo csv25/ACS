@@ -102,6 +102,9 @@ df3$Class <- ifelse(df3$Class == "Yes", 1, 0)
 df3$Class <- as.factor(df3$Class)
 table(df3$Class)
 
+#Creating dataset to run processes
+# write.csv(df3, "pre_processed_data.csv", row.names = TRUE)
+
 set.seed(123)
 
 trainIndex <- createDataPartition(df3$Class, p = 0.7, list = FALSE)
@@ -161,7 +164,7 @@ Y <- trainData$Class
 # We will use this Y later 
 Y <- trainData$Class
 
-smote_result <- SMOTE(X, Y, K = 5)
+smote_result <- SMOTE(X, Y, K = 3)
 typeof(smote_result)
 
 trainData_SMOTE <- smote_result$data
@@ -188,7 +191,7 @@ rfe_control <- rfeControl(functions = rfFuncs, method = "cv", number = 5)
 # Number = 5 Fold Cross Validation
 
 rfe_model <- rfe(trainData_SMOTE[, -ncol(trainData_SMOTE)], trainData_SMOTE$Class,
-                 sizes = c(5, 10, 15, 20), rfeControl = rfe_control)
+                 sizes = 2^(2:5), rfeControl = rfe_control, metric = ifelse(is.factor(trainData_SMOTE$Class), "Accuracy", "Kappa"))
 
 # trainData_SMOTE[, -ncol(trainData_SMOTE)]: All classes except the last (class) 
 # trainData_SMOTE$Class: Target Variable
@@ -308,7 +311,7 @@ lr_test_cm
 # Replacing the threshold : 
 # Steveen: What happened that we decided to replace the threshold?
 lr_test_probabilities <- predict(lr_model, testData_selected, type = "prob")
-lr_test_predictions <- ifelse(lr_test_probabilities[,2] > 0.45, 1, 0)  
+lr_test_predictions <- ifelse(lr_test_probabilities[,2] > 0.46, 1, 0)  
 lr_test_predictions <- as.factor(lr_test_predictions)
 
 lr_test_cm <- confusionMatrix(lr_test_predictions, testData_selected$Class)
@@ -390,10 +393,42 @@ library(e1071)
 
 # test
 
+#let's tune our svm with a search grid 
+
+tune_result <- tune.svm(Class ~ ., 
+                        data= trainData_SMOTE[, c(selected_features_rfe, "Class")],
+                        kernel = "radial",
+                        cost = c(0.1, 1, 10, 50, 100), 
+                        gamma = c(0.0001, 0.001, 0.01, 0.1))
+
+tune_result$best.model
+tune_result$best.parameters
+tune_result$best.performance
+tune_result$performances
+tune_result$best.svm
+
+
+print(best_model)
+
+
+
+
+
+# svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
+#                  kernel = "radial", 
+#                  cost = c(0.1, 1, 10, 100,150),
+#                  gamma = c(0.001,0.01, 0.1, 1, 10),
+#                  degree = 3,
+#                  type = "C-classification",
+#                  tolerance = 0.0001,
+#                  class.weights = c("0"=1, "1"=1.5),
+#                  probability = TRUE)
+
 svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                  kernel = "radial", 
                  cost = 1, 
                  probability = TRUE)
+
 
 print(svm_model)
 

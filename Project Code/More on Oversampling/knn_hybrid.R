@@ -1,7 +1,7 @@
 # Working directory - Setting/Getting
 getwd()
 # Set working directory
-setwd('/Users/melanieloaiza/Desktop/BU - Data Science /Spring 2025/MET CS699 - Data Mining/project_assignment')
+# setwd('/Users/melanieloaiza/Desktop/BU - Data Science /Spring 2025/MET CS699 - Data Mining/project_assignment')
 
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### PACKAGES :   
 library(naniar)  
