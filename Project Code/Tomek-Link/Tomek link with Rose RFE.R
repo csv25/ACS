@@ -164,17 +164,15 @@ testData_selected <- testData[, c(selected_features_rfe, "Class")]
 
 svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                  kernel = "radial",
-                 gamma = c(0.001,0.01, 0.1),
-                 cost = c(0.1, 1, 10, 100,150),
-                 class.weights = c("0"=1, "1"=1.1),
+                 gamma = c(0.001,0.01, 0.1, 1, 10),
+                 cost = c(0.1, 1, 10),
+                 class.weights = c("0"=1, "1"=1.5),
                  probability = TRUE)
 
 
 print(svm_model)
 
 
-
-print(svm_model)
 
 svm_train_predictions <- predict(svm_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
 svm_train_cm <- confusionMatrix(svm_train_predictions, trainData_SMOTE$Class)
