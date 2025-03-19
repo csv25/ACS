@@ -426,11 +426,14 @@ print(best_model)
 
 svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
                  kernel = "radial", 
-                 cost = 1, 
+                 cost = c(0.1, 1, 10, 100,150),
+                 gamma = c(0.001,0.01, 0.1, 1, 10),
+                 degree = 3,
+                 type = "C-classification",
+                 tolerance = 0.0005,
+                 class.weights = c("0"=1, "1"=1.5),
                  probability = TRUE)
 
-
-print(svm_model)
 
 svm_train_predictions <- predict(svm_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
 svm_train_cm <- confusionMatrix(svm_train_predictions, trainData_SMOTE$Class)

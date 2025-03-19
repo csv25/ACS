@@ -230,8 +230,43 @@ testData[var_numeric_test] <- scale(testData[var_numeric_test])
 # We are creating new dataset that only contains features selected from RFE + target variable
 testData_selected <- testData[, c(selected_features_rfe, "Class")] 
 
+
+
+
+library(randomForest)
+#### random forest
+
+rf_model <- randomForest(Class ~ ., data = trainData_SMOTE,
+                         ntree = 1500, 
+                         importance = TRUE, 
+                         classwt = c(1, 10),
+                         maxnodes = 300,
+                         replace = FALSE,
+                         nodesize = 10)
+# # 
+
+# 4 
+# rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
+#                          ntree = 2000, importance = TRUE, classwt = c(1, 15))
+# 5.
+# rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
+#                          ntree = 1000, importance = TRUE, sampsize = c(500, 500))
+
 table(trainData_SMOTE$Class)
+
+print(rf_model)
+rf_train_predictions <- predict(rf_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
+rf_train_cm <- confusionMatrix(rf_train_predictions, trainData_SMOTE$Class)
+rf_train_cm 
+
+rf_test_predictions <- predict(rf_model, testData_selected)
+rf_test_cm <- confusionMatrix(rf_test_predictions, testData_selected$Class)
+rf_test_cm 
+
+
+# # 
 varImpPlot(rf_model)
+
 
 varImp(rf_model)
 
@@ -248,10 +283,6 @@ trainData_filtered <- trainData_SMOTE[, c(selected_features, "Class")]
 dim(trainData_filtered)
 
 
-
-library(randomForest)
-#### random forest
-
 rf_model <- randomForest(Class ~ ., data = trainData_filtered,
                          ntree = 1500, 
                          importance = TRUE, 
@@ -259,19 +290,11 @@ rf_model <- randomForest(Class ~ ., data = trainData_filtered,
                          maxnodes = 300,
                          replace = FALSE,
                          nodesize = 10)
-# # 
-
-# 4 
-# rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
-#                          ntree = 2000, importance = TRUE, classwt = c(1, 15))
-# 5.
-# rf_model <- randomForest(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")],
-#                          ntree = 1000, importance = TRUE, sampsize = c(500, 500))
 
 
 print(rf_model)
-rf_train_predictions <- predict(rf_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
-rf_train_cm <- confusionMatrix(rf_train_predictions, trainData_SMOTE$Class)
+rf_train_predictions <- predict(rf_model, trainData_filtered[, c(selected_features, "Class")])
+rf_train_cm <- confusionMatrix(rf_train_predictions, trainData_filtered$Class)
 rf_train_cm 
 
 rf_test_predictions <- predict(rf_model, testData_selected)
