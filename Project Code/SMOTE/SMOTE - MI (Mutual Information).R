@@ -1,7 +1,7 @@
 # Working directory - Setting/Getting
 getwd()
 # Set working directory
-setwd('/Users/melanieloaiza/Desktop/BU - Data Science /Spring 2025/MET CS699 - Data Mining/project_assignment')
+# setwd('/Users/melanieloaiza/Desktop/BU - Data Science /Spring 2025/MET CS699 - Data Mining/project_assignment')
 
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### PACKAGES :   
 library(naniar)  
@@ -304,7 +304,9 @@ library(e1071)
 
 svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_mi, "Class")], 
                  kernel = "radial", 
-                 cost = 1, 
+                 gamma = c(0.01, 0.1, 1, 2),
+                 cost = c(0.1,1,10, 40),
+                 tolerance = 0.005, 
                  probability = TRUE)
 
 print(svm_model)

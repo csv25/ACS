@@ -191,25 +191,24 @@ rfe_control <- rfeControl(functions = rfFuncs, method = "cv", number = 5)
 # Number = 5 Fold Cross Validation
 
 rfe_model <- rfe(trainData_SMOTE[, -ncol(trainData_SMOTE)], trainData_SMOTE$Class,
-                 sizes = 2^(2:5), rfeControl = rfe_control, metric = ifelse(is.factor(trainData_SMOTE$Class), "Accuracy", "Kappa"))
+                 sizes = c(5, 10, 15, 20), rfeControl = rfe_control, metric = ifelse(is.factor(trainData_SMOTE$Class), "Accuracy", "Kappa"))
 
 # trainData_SMOTE[, -ncol(trainData_SMOTE)]: All classes except the last (class) 
 # trainData_SMOTE$Class: Target Variable
 # sizes = c(5, 10, 15, 20): Breaks it down by subset and chooses the most important features in that particular subset saves the variables
 # rfeControl = rfe_control: Applies the control settings defied earlier (random forest + cv))
 
-selected_features_rfe <- predictors(rfe_model) 
-print(selected_features_rfe)
-#Number of important variables:
-length(selected_features_rfe)
+
+
 
 #Converting all features into numeric type except "Class"
 testData <- testData %>% mutate(across(-Class, as.numeric))
+length(testData)
 #Scaling data so they have a mean of 0 and a SD of 1
 testData[var_numeric_test] <- scale(testData[var_numeric_test])
 # We are creating new dataset that only contains features selected from RFE + target variable
 testData_selected <- testData[, c(selected_features_rfe, "Class")] 
-
+dim(testData_selected)
 #print(testData_selected)
 #dim(testData_selected)
 

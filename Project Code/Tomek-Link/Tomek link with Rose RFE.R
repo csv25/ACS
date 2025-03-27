@@ -144,6 +144,7 @@ testData <- testData %>% mutate(across(-Class, as.numeric))
 testData[var_numeric_test] <- scale(testData[var_numeric_test])
 # We are creating new dataset that only contains features selected from RFE + target variable
 testData_selected <- testData[, c(selected_features_rfe, "Class")]
+#
 
 
 
@@ -161,22 +162,18 @@ testData_selected <- testData[, c(selected_features_rfe, "Class")]
 # tune_result$best.performance
 # tune_result$performances
 # tune_result$best.svm
-
-svm_model <- svm(Class ~ ., data = trainData_SMOTE[, c(selected_features_rfe, "Class")], 
+library(e1071)
+svm_model <- svm(Class ~ ., data = trainData_SMOTE.and.Tomek[, c(selected_features_rfe, "Class")], 
                  kernel = "radial",
-                 gamma = c(0.001,0.01, 0.1, 1, 10),
-                 cost = c(0.1, 1, 10),
+                 cost = c(0.1, 1, 10, 40, 100),
+                 gamma = c(0.01, 0.1, 1),
+                 type = "C-classification",
+                 tolerance = 0.0005,
                  class.weights = c("0"=1, "1"=1.5),
                  probability = TRUE)
 
 
 print(svm_model)
-
-
-
-svm_train_predictions <- predict(svm_model, trainData_SMOTE[, c(selected_features_rfe, "Class")])
-svm_train_cm <- confusionMatrix(svm_train_predictions, trainData_SMOTE$Class)
-svm_train_cm
 
 svm_test_predictions <- predict(svm_model, testData_selected, probability = TRUE)
 svm_test_cm <- confusionMatrix(svm_test_predictions, testData_selected$Class) 
