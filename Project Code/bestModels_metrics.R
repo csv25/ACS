@@ -1,6 +1,6 @@
 ## ** ------------------------------------------------------------------------------------ ** 
 ## CS699 – Spring 2025 - Project Assignment 
-## Students : Melanie R Loaiza, BU ID :  and Carlos Vargas, BU ID: 
+## Students : Melanie R Loaiza, BU ID : U78379196 and Carlos Vargas, BU ID: U42396592  
 ## ** ------------------------------------------------------------------------------------ **  
 
 ## ** ----------  STEP 1: Load and Preview project_data.csv ---------- **
@@ -145,10 +145,10 @@ trainIndex_df1 <- createDataPartition(df1$Class, p = 0.7, list = FALSE)
 trainData_df1 <- df1[trainIndex_df1, ]
 testData_df1 <- df1[-trainIndex_df1, ]
 
-table(trainData_df1$Class)                # df1 : Class distribution trainData No: 2801 and Yes: 222
+table(trainData_df1$Class)                # df1 : Class distribution trainData_df1 No: 2801 and Yes: 222
 dim(trainData_df1)                        # df1 : trainData_df1 dimensions 3023   52
 
-table(testData_df1$Class)                 # df1 : Class distribution testData No: 1200 and Yes: 95 
+table(testData_df1$Class)                 # df1 : Class distribution testData_df1 No: 1200 and Yes: 95 
 dim(testData_df1)                         # df1 : testData_df1 dimensions 1295   52
 
 ## ** ----------  STEP 5: Data transformation (df and df1) ---------- **  
@@ -231,7 +231,7 @@ table(testDataBORUTA_df1$Class)         # df1 : Class distribution testDataBORUT
 dim(testDataBORUTA_df1)                 # df1 : testDataBORUTA_df1 dimensions 1295   52
 
 ## ** ----------  STEP 6.1.1:  SMOTE-BORUTA - Best Models (df and df1) ---------- **  
-## MODEL 1 : Random Forest : 
+## MODEL 1 : Random Forest  
 ## df : Sensitivity : 0.9617 
 ## df : Specificity : 0.4947  
 library(randomForest)  
@@ -318,7 +318,7 @@ calculate_measures <- function(tp, fp, tn, fn){
 yes_pmeasures = calculate_measures(tp, fp, tn, fn)
 yes_pmeasures
 
-## MODEL 2 : Support Vector Machine: 
+## MODEL 2 : Support Vector Machine 
 ## df : Sensitivity : 0.8158     
 ## df : Specificity : 0.8316    
 library(e1071) 
@@ -340,10 +340,80 @@ svm_model <- svm(Class ~ ., data = trainDataSMOTE_BORUTA_df1,  kernel = "radial"
 svm_model
 
 svm_preds <- predict(svm_model, testDataBORUTA_df1, probability = TRUE)
-svm_cm <- confusionMatrix(svm_preds, testDataBORUTA_df1$Class) 
-svm_cm 
+svm_cm_no <- confusionMatrix(svm_preds, testDataBORUTA_df1$Class) 
+svm_cm_no 
 
-## MODEL 3 : kNN: 
+svm_cm_no <- svm_cm_no$table
+tp <- svm_cm_no["No", "No"]     
+fn <- svm_cm_no["Yes", "No"]    
+fp <- svm_cm_no["No", "Yes"]    
+tn <- svm_cm_no["Yes", "Yes"]   
+svm_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+svm_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+svm_cm_yes <- confusionMatrix(svm_preds, testDataBORUTA_df1$Class, positive = 'Yes') 
+svm_cm_yes 
+
+svm_cm_yes <- svm_cm_yes$table
+tn <- svm_cm_yes["No", "No"]    
+fp <- svm_cm_yes["Yes", "No"]   
+fn <- svm_cm_yes["No", "Yes"]   
+tp <- svm_cm_yes["Yes", "Yes"]  
+
+svm_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+svm_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 3 : kNN
 ## df : Sensitivity : 0.8517       
 ## df : Specificity : 0.5895
 library(caret) 
@@ -362,8 +432,8 @@ knn_preds <- predict(knn_model, testDataBORUTA)
 knn_cm <- confusionMatrix(knn_preds, testDataBORUTA$Class)
 knn_cm
 
-knn_model$bestTune
-knn_model$results 
+#knn_model$bestTune
+#knn_model$results 
 
 ## df1 : Sensitivity : 0.8517    
 ## df1 : Specificity : 0.6421
@@ -380,13 +450,83 @@ knn_model
 plot(knn_model)
 
 knn_preds <- predict(knn_model, testDataBORUTA_df1)
-knn_cm <- confusionMatrix(knn_preds, testDataBORUTA_df1$Class)
-knn_cm
+knn_cm_no <- confusionMatrix(knn_preds, testDataBORUTA_df1$Class)
+knn_cm_no
 
-knn_model$bestTune
-knn_model$results
+#knn_model$bestTune
+#knn_model$results 
 
-## MODEL 4 : Naives Bayes: 
+knn_cm_no <- knn_cm_no$table
+tp <- knn_cm_no["No", "No"]     
+fn <- knn_cm_no["Yes", "No"]    
+fp <- knn_cm_no["No", "Yes"]    
+tn <- knn_cm_no["Yes", "Yes"]   
+knn_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+knn_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+knn_cm_yes <- confusionMatrix(knn_preds, testDataBORUTA$Class, positive = 'Yes')
+knn_cm_yes
+
+knn_cm_yes <- knn_cm_yes$table
+tn <- knn_cm_yes["No", "No"]    
+fp <- knn_cm_yes["Yes", "No"]   
+fn <- knn_cm_yes["No", "Yes"]   
+tp <- knn_cm_yes["Yes", "Yes"]  
+
+knn_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+knn_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 4 : Naives Bayes 
 ## df : Sensitivity : 0.7958 
 ## df : Specificity : 0.8211  
 library(e1071)   
@@ -402,8 +542,79 @@ nb_model
 plot(nb_model)
 
 nb_preds <- predict(nb_model, testDataBORUTA)
-nb_cm <- confusionMatrix(nb_preds, testDataBORUTA$Class)
-nb_cm
+nb_cm_no <- confusionMatrix(nb_preds, testDataBORUTA$Class)
+nb_cm_no 
+
+nb_cm_no <- nb_cm_no$table
+tp <- nb_cm_no["No", "No"]     
+fn <- nb_cm_no["Yes", "No"]    
+fp <- nb_cm_no["No", "Yes"]    
+tn <- nb_cm_no["Yes", "Yes"]   
+nb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nb_cm_yes <- confusionMatrix(nb_preds, testDataBORUTA$Class, positive = 'Yes')
+nb_cm_yes 
+
+nb_cm_yes <- nb_cm_yes$table
+tn <- nb_cm_yes["No", "No"]    
+fp <- nb_cm_yes["Yes", "No"]   
+fn <- nb_cm_yes["No", "Yes"]   
+tp <- nb_cm_yes["Yes", "Yes"]  
+
+nb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
 
 ## MODEL 5 : Neural Networks
 ## df : Sensitivity : 0.8300 
@@ -422,8 +633,79 @@ nnet_model
 plot(nnet_model) 
 
 nnet_preds <- predict(nnet_model, testDataBORUTA, probability = TRUE)
-nnet_cm <- confusionMatrix(nnet_preds, testDataBORUTA$Class) 
-nnet_cm
+nnet_cm_no <- confusionMatrix(nnet_preds, testDataBORUTA$Class) 
+nnet_cm_no
+
+nnet_cm_no <- nnet_cm_no$table
+tp <- nnet_cm_no["No", "No"]     
+fn <- nnet_cm_no["Yes", "No"]    
+fp <- nnet_cm_no["No", "Yes"]    
+tn <- nnet_cm_no["Yes", "Yes"]   
+nnet_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nnet_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nnet_cm_yes <- confusionMatrix(nnet_preds, testDataBORUTA$Class, positive = 'Yes') 
+nnet_cm_yes
+
+nnet_cm_yes <- nnet_cm_yes$table
+tn <- nnet_cm_yes["No", "No"]    
+fp <- nnet_cm_yes["Yes", "No"]   
+fn <- nnet_cm_yes["No", "Yes"]   
+tp <- nnet_cm_yes["Yes", "Yes"]  
+
+nnet_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nnet_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
 
 ## MODEL 6 :  Logistic Regression 
 ## df : Sensitivity : 0.8700  
@@ -437,10 +719,81 @@ lr_model <- train(Class ~ ., data = trainDataSMOTE_BORUTA, method = "glm", famil
 lr_model
 
 lr_preds <- predict(lr_model, testDataBORUTA)
-lr_cm <- confusionMatrix(lr_preds, testDataBORUTA$Class)
-lr_cm  
+lr_cm_no <- confusionMatrix(lr_preds, testDataBORUTA$Class)
+lr_cm_no  
 
-## EXTRA MODEL 7 : STACKED ENSEMBLE METHOD 
+lr_cm_no <- lr_cm_no$table
+tp <- lr_cm_no["No", "No"]     
+fn <- lr_cm_no["Yes", "No"]    
+fp <- lr_cm_no["No", "Yes"]    
+tn <- lr_cm_no["Yes", "Yes"]   
+lr_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+lr_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+lr_cm_yes <- confusionMatrix(lr_preds, testDataBORUTA$Class, positive = 'Yes')
+lr_cm_yes 
+
+lr_cm_yes <- lr_cm_yes$table
+tn <- lr_cm_yes["No", "No"]    
+fp <- lr_cm_yes["Yes", "No"]   
+fn <- lr_cm_yes["No", "Yes"]   
+tp <- lr_cm_yes["Yes", "Yes"]  
+
+lr_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+lr_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+
+## EXTRA MODEL 7 : Stacked Ensemble Method  
 ## df : Sensitivity : 0.9533 
 ## df : Specificity : 0.3368    
 library(caretEnsemble) 
@@ -488,20 +841,20 @@ rfe <- rfe(X_balanced, Y_balanced, sizes = c(10, 20, 30), rfeControl = rfe_train
 varImpRFE <- varImp(rfe)
 rfeFeatures <- rownames(varImpRFE)[varImpRFE$Overall > 9.58]
 
-print(rfeFeatures)               # Print rfeFeatures 
-length(rfeFeatures)              # 42 rfeFeatures found
+print(rfeFeatures)               # df : Print rfeFeatures 
+length(rfeFeatures)              # df : 42 rfeFeatures found
 
 trainDataSMOTE_RFE <- trainDataSMOTE[, c(rfeFeatures, "Class")]
 testDataRFE <- testData[, c(rfeFeatures, "Class")] 
 
-table(trainDataSMOTE_RFE$Class)  # Class distribution trainDataSMOTE_RFE No: 2801 and Yes: 2664 
-dim(trainDataSMOTE_RFE)          # trainDataSMOTE_RFE dimensions 5465   43 
+table(trainDataSMOTE_RFE$Class)  # df : Class distribution trainDataSMOTE_RFE No: 2801 and Yes: 2664 
+dim(trainDataSMOTE_RFE)          # df : trainDataSMOTE_RFE dimensions 5465   43 
 
-table(testDataRFE$Class)         # Class distribution testDataRFE No: 1200 and Yes: 95   
-dim(testDataRFE)                 # testDataRFE dimensions 1295   43 
+table(testDataRFE$Class)         # df : Class distribution testDataRFE No: 1200 and Yes: 95   
+dim(testDataRFE)                 # df : testDataRFE dimensions 1295   43 
 
 ## ** ----------  STEP 6.2.1:  SMOTE-RFE - Best Models (Only df) ---------- **    
-## MODEL 1 : Random Forest : 
+## MODEL 1 : Random Forest  
 ## df: Sensitivity : 0.9600
 ## df : Specificity : 0.5158  
 set.seed(1401) 
@@ -511,10 +864,80 @@ rf_model
 plot(rf_model)
 
 rf_preds <- predict(rf_model, testDataRFE)
-rf_cm <- confusionMatrix(rf_preds, testDataRFE$Class)
-rf_cm 
+rf_cm_no <- confusionMatrix(rf_preds, testDataRFE$Class)
+rf_cm_no 
 
-## MODEL 2 : Support Vector Machine:
+rf_cm_no <- rf_cm_no$table
+tp <- rf_cm_no["No", "No"]     
+fn <- rf_cm_no["Yes", "No"]    
+fp <- rf_cm_no["No", "Yes"]    
+tn <- rf_cm_no["Yes", "Yes"]   
+rf_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+rf_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+rf_cm_yes <- confusionMatrix(rf_preds, testDataRFE$Class, positive = 'Yes')
+rf_cm_yes 
+
+rf_cm_yes <- rf_cm_yes$table
+tn <- rf_cm_yes["No", "No"]    
+fp <- rf_cm_yes["Yes", "No"]   
+fn <- rf_cm_yes["No", "Yes"]   
+tp <- rf_cm_yes["Yes", "Yes"]  
+
+rf_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+rf_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 2 : Support Vector Machine
 ## df : Sensitivity : 0.8208
 ## df : Specificity : 0.8105 
 library(e1071) 
@@ -526,10 +949,80 @@ svm_model <- svm(Class ~ ., data = trainDataSMOTE_RFE,  kernel = "radial",  cost
 svm_model
 
 svm_preds <- predict(svm_model, testDataRFE, probability = TRUE)
-svm_cm <- confusionMatrix(svm_preds, testDataRFE$Class) 
-svm_cm
+svm_cm_no <- confusionMatrix(svm_preds, testDataRFE$Class) 
+svm_cm_no
 
-## MODEL 3 : kNN: 
+svm_cm_no <- svm_cm_no$table
+tp <- svm_cm_no["No", "No"]     
+fn <- svm_cm_no["Yes", "No"]    
+fp <- svm_cm_no["No", "Yes"]    
+tn <- svm_cm_no["Yes", "Yes"]   
+svm_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+svm_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+svm_cm_yes <- confusionMatrix(svm_preds, testDataRFE$Class, positive = 'Yes') 
+svm_cm_yes
+
+svm_cm_yes <- svm_cm_yes$table
+tn <- svm_cm_yes["No", "No"]    
+fp <- svm_cm_yes["Yes", "No"]   
+fn <- svm_cm_yes["No", "Yes"]   
+tp <- svm_cm_yes["Yes", "Yes"]  
+
+svm_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+svm_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 3 : kNN 
 ## df : Sensitivity : 0.8667
 ## df : Specificity : 0.5474  
 set.seed(123)
@@ -543,10 +1036,81 @@ knn_model
 plot(knn_model)
 
 knn_preds <- predict(knn_model, testDataRFE)
-knn_cm <- confusionMatrix(knn_preds, testDataRFE$Class) 
-knn_cm 
+knn_cm_no <- confusionMatrix(knn_preds, testDataRFE$Class) 
+knn_cm_no 
 
-## MODEL 4 : Naives Bayes:
+knn_cm_no <- knn_cm_no$table
+tp <- knn_cm_no["No", "No"]     
+fn <- knn_cm_no["Yes", "No"]    
+fp <- knn_cm_no["No", "Yes"]    
+tn <- knn_cm_no["Yes", "Yes"]   
+knn_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+knn_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+knn_cm_yes <- confusionMatrix(knn_preds, testDataRFE$Class, positive = 'Yes') 
+knn_cm_yes 
+
+knn_cm_yes <- knn_cm_yes$table
+tn <- knn_cm_yes["No", "No"]    
+fp <- knn_cm_yes["Yes", "No"]   
+fn <- knn_cm_yes["No", "Yes"]   
+tp <- knn_cm_yes["Yes", "Yes"]  
+
+knn_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+knn_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+
+## MODEL 4 : Naives Bayes
 ## df : Sensitivity : 0.8017
 ## df : Specificity : 0.8316 
 library(e1071)    
@@ -562,8 +1126,78 @@ nb_model
 plot(nb_model)
 
 nb_preds <- predict(nb_model, testDataRFE, probability = TRUE)
-nb_cm <- confusionMatrix(nb_preds, testDataRFE$Class) 
-nb_cm
+nb_cm_no <- confusionMatrix(nb_preds, testDataRFE$Class) 
+nb_cm_no
+
+nb_cm_no <- nb_cm_no$table
+tp <- nb_cm_no["No", "No"]     
+fn <- nb_cm_no["Yes", "No"]    
+fp <- nb_cm_no["No", "Yes"]    
+tn <- nb_cm_no["Yes", "Yes"]   
+nb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nb_cm_yes <- confusionMatrix(nb_preds, testDataRFE$Class, positive = 'Yes') 
+nb_cm_yes
+
+nb_cm_yes <- nb_cm_yes$table
+tn <- nb_cm_yes["No", "No"]    
+fp <- nb_cm_yes["Yes", "No"]   
+fn <- nb_cm_yes["No", "Yes"]   
+tp <- nb_cm_yes["Yes", "Yes"]  
+
+nb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 5 : Neural Networks 
 ## df : Sensitivity : 0.8467  
@@ -579,8 +1213,78 @@ nnet_model
 plot(nnet_model)
 
 nnet_preds <- predict(nnet_model, testDataRFE)
-nnet_cm <- confusionMatrix(nnet_preds, testDataRFE$Class) 
-nnet_cm
+nnet_cm_no <- confusionMatrix(nnet_preds, testDataRFE$Class) 
+nnet_cm_no
+
+nnet_cm_no <- nnet_cm_no$table
+tp <- nnet_cm_no["No", "No"]     
+fn <- nnet_cm_no["Yes", "No"]    
+fp <- nnet_cm_no["No", "Yes"]    
+tn <- nnet_cm_no["Yes", "Yes"]   
+nnet_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nnet_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nnet_cm_yes <- confusionMatrix(nnet_preds, testDataRFE$Class, positive = 'Yes') 
+nnet_cm_yes
+
+nnet_cm_yes <- nnet_cm_yes$table
+tn <- nnet_cm_yes["No", "No"]    
+fp <- nnet_cm_yes["Yes", "No"]   
+fn <- nnet_cm_yes["No", "Yes"]   
+tp <- nnet_cm_yes["Yes", "Yes"]  
+
+nnet_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nnet_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 6 :  Logistic Regression 
 ## df : Sensitivity : 0.8242  
@@ -593,10 +1297,80 @@ lr_model <- train(Class ~ ., data = trainDataSMOTE_RFE, method = "glm", family =
 lr_model
 
 lr_preds <- predict(lr_model, testDataRFE)
-lr_cm <- confusionMatrix(lr_preds, testDataRFE$Class)
-lr_cm 
+lr_cm_no <- confusionMatrix(lr_preds, testDataRFE$Class)
+lr_cm_no 
 
-## EXTRA MODEL 7 : STACKED ENSEMBLE METHOD 
+lr_cm_no <- lr_cm_no$table
+tp <- lr_cm_no["No", "No"]     
+fn <- lr_cm_no["Yes", "No"]    
+fp <- lr_cm_no["No", "Yes"]    
+tn <- lr_cm_no["Yes", "Yes"]   
+lr_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+lr_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+lr_cm_yes <- confusionMatrix(lr_preds, testDataRFE$Class, positive = 'Yes')
+lr_cm_yes 
+
+lr_cm_yes <- lr_cm_yes$table
+tn <- lr_cm_yes["No", "No"]    
+fp <- lr_cm_yes["Yes", "No"]   
+fn <- lr_cm_yes["No", "Yes"]   
+tp <- lr_cm_yes["Yes", "Yes"]  
+
+lr_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+lr_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## EXTRA MODEL 7 : Stacked Ensemble Method 
 ## df : Sensitivity : 0.9575   
 ## df : Specificity : 0.3474  
 library(caretEnsemble) 
@@ -641,22 +1415,22 @@ names(infoGain)[names(infoGain) == "importance"] <- "Info_Gain"
 sorted_infoGain <- infoGain[order(-infoGain$Info_Gain), ]
 infoGain_Features <- sorted_infoGain[1:12, ]
 
-print(infoGain_Features)                  # Print infoGain_Features 
-nrow(infoGain_Features)                   # 12 infoGain_Features found
+print(infoGain_Features)                  # df : Print infoGain_Features 
+nrow(infoGain_Features)                   # df : 12 infoGain_Features found
 
 infoGain_Features <- infoGain_Features$attributes
 
 trainDataSMOTE_infoGain <- trainDataSMOTE[, c(infoGain_Features, "Class")]
 testData_infoGain <- testData[, c(infoGain_Features, "Class")] 
 
-table(trainDataSMOTE_infoGain$Class)      # Class distribution trainDataSMOTE_infoGain No: 2801 and Yes: 2664 
-dim(trainDataSMOTE_infoGain)              # trainDataSMOTE_infoGain dimensions 5465   13 
+table(trainDataSMOTE_infoGain$Class)      # df : Class distribution trainDataSMOTE_infoGain No: 2801 and Yes: 2664 
+dim(trainDataSMOTE_infoGain)              # df : trainDataSMOTE_infoGain dimensions 5465   13 
 
-table(testData_infoGain$Class)            # Class distribution testData_infoGain No: 1200 and Yes: 95   
-dim(testData_infoGain)                    # testData_infoGain dimensions 1295   13 
+table(testData_infoGain$Class)            # df : Class distribution testData_infoGain No: 1200 and Yes: 95   
+dim(testData_infoGain)                    # df : testData_infoGain dimensions 1295   13 
 
-## ** ----------  STEP 6.3.1:  SMOTE- Information Gain - Best Models ---------- **   
-## MODEL 1 : Balanced Random Forest  
+## ** ----------  STEP 6.3.1:  SMOTE- Information Gain - Best Models (Only df) ---------- **   
+## MODEL 1 :  Random Forest  
 ## df : Sensitivity : 0.9308
 ## df : Specificity : 0.4842 
 library(randomForest) 
@@ -666,10 +1440,80 @@ rf_model <- randomForest(Class ~ ., data = trainDataSMOTE_infoGain, ntree = 2000
 rf_model
 
 rf_preds <- predict(rf_model, testData_infoGain)
-rf_cm <- confusionMatrix(rf_preds, testData_infoGain$Class)
-rf_cm  
+rf_cm_no <- confusionMatrix(rf_preds, testData_infoGain$Class)
+rf_cm_no  
 
-## MODEL 2 : Support Vector Machine: 
+rf_cm_no <- rf_cm_no$table
+tp <- rf_cm_no["No", "No"]     
+fn <- rf_cm_no["Yes", "No"]    
+fp <- rf_cm_no["No", "Yes"]    
+tn <- rf_cm_no["Yes", "Yes"]   
+rf_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+rf_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+rf_cm_yes <- confusionMatrix(rf_preds, testData_infoGain$Class,  positive = 'Yes')
+rf_cm_yes  
+
+rf_cm_yes <- rf_cm_yes$table
+tn <- rf_cm_yes["No", "No"]    
+fp <- rf_cm_yes["Yes", "No"]   
+fn <- rf_cm_yes["No", "Yes"]   
+tp <- rf_cm_yes["Yes", "Yes"]  
+
+rf_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+rf_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 2 : Support Vector Machine 
 ## df : Sensitivity : 0.7917    
 ## df : Specificity : 0.8211  
 library(e1071) 
@@ -682,10 +1526,80 @@ svm_model <- svm(Class ~ ., data = trainDataSMOTE_infoGain,  kernel = "radial",
 svm_model
 
 svm_preds <- predict(svm_model, testData_infoGain, probability = TRUE)
-svm_cm <- confusionMatrix(svm_preds, testData_infoGain$Class) 
-svm_cm
+svm_cm_no <- confusionMatrix(svm_preds, testData_infoGain$Class) 
+svm_cm_no
 
-## MODEL 3 : kNN: 
+svm_cm_no <- svm_cm_no$table
+tp <- svm_cm_no["No", "No"]     
+fn <- svm_cm_no["Yes", "No"]    
+fp <- svm_cm_no["No", "Yes"]    
+tn <- svm_cm_no["Yes", "Yes"]   
+svm_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+svm_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+svm_cm_yes <- confusionMatrix(svm_preds, testData_infoGain$Class, positive = 'Yes') 
+svm_cm_yes
+
+svm_cm_yes <- svm_cm_yes$table
+tn <- svm_cm_yes["No", "No"]    
+fp <- svm_cm_yes["Yes", "No"]   
+fn <- svm_cm_yes["No", "Yes"]   
+tp <- svm_cm_yes["Yes", "Yes"]  
+
+svm_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+svm_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+ 
+## MODEL 3 : kNN 
 ## df : Sensitivity : 0.8483 
 ## df : Specificity : 0.4632 
 set.seed(123) 
@@ -694,15 +1608,85 @@ knn_trainControl  <- trainControl(method = 'repeatedcv', number = 10, verboseIte
 
 set.seed(1401)
 knn_model <- train(Class~.,  data = trainDataSMOTE_infoGain, method = 'knn', tuneGrid = knnGrid,
-                   trControl = knn_trainControl, tuneLength = 10)
+            trControl = knn_trainControl, tuneLength = 10)
 knn_model
 plot(knn_model) 
 
 knn_preds <- predict(knn_model, testData_infoGain)
-knn_cm <- confusionMatrix(knn_preds, testData_infoGain$Class) 
-knn_cm
+knn_cm_no <- confusionMatrix(knn_preds, testData_infoGain$Class) 
+knn_cm_no
 
-## MODEL 4 : Naives Bayes: 
+knn_cm_no <- knn_cm_no$table
+tp <- knn_cm_no["No", "No"]     
+fn <- knn_cm_no["Yes", "No"]    
+fp <- knn_cm_no["No", "Yes"]    
+tn <- knn_cm_no["Yes", "Yes"]   
+knn_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+knn_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+knn_cm_yes <- confusionMatrix(knn_preds, testData_infoGain$Class, positive = 'Yes') 
+knn_cm_yes
+
+knn_cm_yes <- knn_cm_yes$table
+tn <- knn_cm_yes["No", "No"]    
+fp <- knn_cm_yes["Yes", "No"]   
+fn <- knn_cm_yes["No", "Yes"]   
+tp <- knn_cm_yes["Yes", "Yes"]  
+
+knn_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+knn_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 4 : Naives Bayes 
 ## df : Sensitivity : 0.8492  
 ## df : Specificity : 0.7158   
 library(e1071)    
@@ -718,8 +1702,78 @@ nb_model
 plot(nb_model)
 
 nb_preds <- predict(nb_model, testData_infoGain, probability = TRUE)
-nb_cm <- confusionMatrix(nb_preds, testData_infoGain$Class) 
-nb_cm
+nb_cm_no <- confusionMatrix(nb_preds, testData_infoGain$Class) 
+nb_cm_no
+
+nb_cm_no <- nb_cm_no$table
+tp <- nb_cm_no["No", "No"]     
+fn <- nb_cm_no["Yes", "No"]    
+fp <- nb_cm_no["No", "Yes"]    
+tn <- nb_cm_no["Yes", "Yes"]   
+nb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nb_cm_yes <- confusionMatrix(nb_preds, testData_infoGain$Class, positive = 'Yes') 
+nb_cm_yes
+
+nb_cm_yes <- nb_cm_yes$table
+tn <- nb_cm_yes["No", "No"]    
+fp <- nb_cm_yes["Yes", "No"]   
+fn <- nb_cm_yes["No", "Yes"]   
+tp <- nb_cm_yes["Yes", "Yes"]  
+
+nb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 5 : Logistic Regression 
 ## df : Sensitivity : 0.7808  
@@ -732,8 +1786,78 @@ lr_model <- train(Class ~ ., data = trainDataSMOTE_infoGain, method = "glm", fam
 lr_model
 
 lr_preds <- predict(lr_model, testData_infoGain)
-lr_cm <- confusionMatrix(lr_preds, testData_infoGain$Class)
-lr_cm 
+lr_cm_no <- confusionMatrix(lr_preds, testData_infoGain$Class)
+lr_cm_no 
+
+lr_cm_no <- lr_cm_no$table
+tp <- lr_cm_no["No", "No"]     
+fn <- lr_cm_no["Yes", "No"]    
+fp <- lr_cm_no["No", "Yes"]    
+tn <- lr_cm_no["Yes", "Yes"]   
+lr_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+lr_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+lr_cm_yes <- confusionMatrix(lr_preds, testData_infoGain$Class, positive = 'Yes')
+lr_cm_yes 
+
+lr_cm_yes <- lr_cm_yes$table
+tn <- lr_cm_yes["No", "No"]    
+fp <- lr_cm_yes["Yes", "No"]   
+fn <- lr_cm_yes["No", "Yes"]   
+tp <- lr_cm_yes["Yes", "Yes"]  
+
+lr_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+lr_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 6 : Neural Networks  
 ##  df : Sensitivity : 0.7600    
@@ -749,8 +1873,78 @@ nnet_model
 plot(nnet_model)
 
 nnet_preds <- predict(nnet_model, testData_infoGain)
-nnet_cm <- confusionMatrix(nnet_preds, testData_infoGain$Class) 
-nnet_cm
+nnet_cm_no <- confusionMatrix(nnet_preds, testData_infoGain$Class) 
+nnet_cm_no
+
+nnet_cm_no <- nnet_cm_no$table
+tp <- nnet_cm_no["No", "No"]     
+fn <- nnet_cm_no["Yes", "No"]    
+fp <- nnet_cm_no["No", "Yes"]    
+tn <- nnet_cm_no["Yes", "Yes"]   
+nnet_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nnet_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nnet_cm_yes <- confusionMatrix(nnet_preds, testData_infoGain$Class, positive = 'Yes') 
+nnet_cm_yes
+
+nnet_cm_yes <- nnet_cm_yes$table
+tn <- nnet_cm_yes["No", "No"]    
+fp <- nnet_cm_yes["Yes", "No"]   
+fn <- nnet_cm_yes["No", "Yes"]   
+tp <- nnet_cm_yes["Yes", "Yes"]  
+
+nnet_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nnet_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## ** ----------  STEP 7: Undersampling Technique : TOMEK (df and df1) ---------- ** 
 library(UBL)
@@ -790,8 +1984,8 @@ set.seed(123)
 bor_df1 <- Boruta(Class ~ ., data = trainData_Tomek_df1, doTrace = 2)
 borFeatures_df1 <- getSelectedAttributes(bor_df1, withTentative = TRUE)
 
-print(borFeatures_df1)                        # df1 : Print borFeatures 
-length(borFeatures_df1)                       # df1 : 21 borFeatures found
+print(borFeatures_df1)                        # df1 : Print borFeatures_df1 
+length(borFeatures_df1)                       # df1 : 21 borFeatures_df1 found
 
 trainDataTomek_BORUTA_df1 <- trainData_Tomek_df1[, c(borFeatures_df1, "Class")]
 testData_BORUTA_df1 <- testData_df1[, c(borFeatures_df1, "Class")] 
@@ -803,7 +1997,7 @@ table(testData_BORUTA_df1$Class)              # df1 : Class distribution testDat
 dim(testData_BORUTA_df1)                      # df1 : testData_BORUTA_df1 dimensions 1295   22 
 
 ## ** ----------  STEP 7.1.1:  TOMEK-BORUTA - Best Models (Only df) ---------- **   
-## MODEL 1 : Balanced Random Forest 
+## MODEL 1 : Random Forest 
 ## df: Sensitivity : 0.8375      
 ## df : Specificity : 0.7474        
 library(UBL)
@@ -818,8 +2012,78 @@ brf_model <- randomForest(Class ~ .,  data = trainDataTomek_BORUTA, tuneGrid = b
 brf_model
 
 brf_preds <- predict(brf_model, testData_BORUTA)
-brf_cm <- confusionMatrix(brf_preds, testData_BORUTA$Class)
-brf_cm 
+brf_cm_no <- confusionMatrix(brf_preds, testData_BORUTA$Class)
+brf_cm_no 
+
+brf_cm_no <- brf_cm_no$table
+tp <- brf_cm_no["No", "No"]     
+fn <- brf_cm_no["Yes", "No"]    
+fp <- brf_cm_no["No", "Yes"]    
+tn <- brf_cm_no["Yes", "Yes"]   
+brf_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+brf_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+brf_cm_yes <- confusionMatrix(brf_preds, testData_BORUTA$Class, positive = 'Yes')
+brf_cm_yes 
+
+brf_cm_yes <- brf_cm_yes$table
+tn <- brf_cm_yes["No", "No"]    
+fp <- brf_cm_yes["Yes", "No"]   
+fn <- brf_cm_yes["No", "Yes"]   
+tp <- brf_cm_yes["Yes", "Yes"]  
+
+brf_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+brf_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ### Alternate cutoffs : 
 ## df : Sensitivity : 0.7733
@@ -837,7 +2101,7 @@ brf_preds <- factor(brf_preds, levels = levels(testData_BORUTA$Class))
 brf_cm <- confusionMatrix(brf_preds, testData_BORUTA$Class)
 brf_cm
 
-## MODEL 2 : Support Vector Machine:
+## MODEL 2 : Support Vector Machine
 ## df : Sensitivity : 0.8000 
 ## df : Specificity : 0.8000    
 set.seed(123)
@@ -851,8 +2115,78 @@ svm_model
 svm_model$results %>% arrange(desc(ROC)) %>% head(100)
 
 svm_preds <- predict(svm_model, testData_BORUTA)
-svm_cm <- confusionMatrix(svm_preds, testData_BORUTA$Class)
-svm_cm 
+svm_cm_no <- confusionMatrix(svm_preds, testData_BORUTA$Class)
+svm_cm_no 
+
+svm_cm_no <- svm_cm_no$table
+tp <- svm_cm_no["No", "No"]     
+fn <- svm_cm_no["Yes", "No"]    
+fp <- svm_cm_no["No", "Yes"]    
+tn <- svm_cm_no["Yes", "Yes"]   
+svm_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+svm_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+svm_cm_yes <- confusionMatrix(svm_preds, testData_BORUTA$Class, positive = 'Yes')
+svm_cm_yes 
+
+svm_cm_yes <- svm_cm_yes$table
+tn <- svm_cm_yes["No", "No"]    
+fp <- svm_cm_yes["Yes", "No"]   
+fn <- svm_cm_yes["No", "Yes"]   
+tp <- svm_cm_yes["Yes", "Yes"]  
+
+svm_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+svm_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ### Class-weighted SVM
 ## df : Sensitivity : 0.8300      
@@ -875,7 +2209,7 @@ SVMwts_preds <- predict(SVMwts_model, testData_BORUTA)
 SVMwt_cm <- confusionMatrix(SVMwts_preds, testData_BORUTA$Class)
 SVMwt_cm
 
-## MODEL 3 : kNN: 
+## MODEL 3 : kNN 
 ## df : Sensitivity : 0.7858  
 ## df : Specificity : 0.8105    
 library(caret)
@@ -891,13 +2225,84 @@ knn_model
 plot(knn_model)
 
 knn_preds <- predict(knn_model, testData_BORUTA)
-knn_test_cm <- confusionMatrix(knn_preds, testData_BORUTA$Class)
-knn_test_cm
+knn_cm_no <- confusionMatrix(knn_preds, testData_BORUTA$Class)
+knn_cm_no
 
-knn_model$bestTune
-knn_model$results
+#knn_model$bestTune
+#knn_model$results
 
-## MODEL 4 : Naives Bayes:
+knn_cm_no <- knn_cm_no$table
+tp <- knn_cm_no["No", "No"]     
+fn <- knn_cm_no["Yes", "No"]    
+fp <- knn_cm_no["No", "Yes"]    
+tn <- knn_cm_no["Yes", "Yes"]   
+knn_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+knn_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+knn_cm_yes <- confusionMatrix(knn_preds, testData_BORUTA$Class, positive = 'Yes')
+knn_cm_yes
+
+knn_cm_yes <- knn_cm_yes$table
+tn <- knn_cm_yes["No", "No"]    
+fp <- knn_cm_yes["Yes", "No"]   
+fn <- knn_cm_yes["No", "Yes"]   
+tp <- knn_cm_yes["Yes", "Yes"]  
+
+knn_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+knn_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+
+## MODEL 4 : Naives Bayes
 ## df : Sensitivity : 0.7708 
 ## df : Specificity : 0.8316 
 library(e1071)  
@@ -913,8 +2318,78 @@ nb_model
 plot(nb_model)
 
 nb_preds <- predict(nb_model, testData_BORUTA)
-nb_cm <- confusionMatrix(nb_preds, testData_BORUTA$Class)
-nb_cm
+nb_cm_no <- confusionMatrix(nb_preds, testData_BORUTA$Class)
+nb_cm_no
+
+nb_cm_no <- nb_cm_no$table
+tp <- nb_cm_no["No", "No"]     
+fn <- nb_cm_no["Yes", "No"]    
+fp <- nb_cm_no["No", "Yes"]    
+tn <- nb_cm_no["Yes", "Yes"]   
+nb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nb_cm_yes <- confusionMatrix(nb_preds, testData_BORUTA$Class, positive = 'Yes')
+nb_cm_yes
+
+nb_cm_yes <- nb_cm_yes$table
+tn <- nb_cm_yes["No", "No"]    
+fp <- nb_cm_yes["Yes", "No"]   
+fn <- nb_cm_yes["No", "Yes"]   
+tp <- nb_cm_yes["Yes", "Yes"]  
+
+nb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 5 : AdaBoosting 
 #install.packages("adabag", dependencies = TRUE)
@@ -935,8 +2410,78 @@ boosting_model
 plot(boosting_model)
 
 boosting_preds <- predict(boosting_model, testData_BORUTA)
-boosting_cm <- confusionMatrix(boosting_preds, testData_BORUTA$Class)
-boosting_cm
+boosting_cm_no <- confusionMatrix(boosting_preds, testData_BORUTA$Class)
+boosting_cm_no
+
+boosting_cm_no <- boosting_cm_no$table
+tp <- boosting_cm_no["No", "No"]     
+fn <- boosting_cm_no["Yes", "No"]    
+fp <- boosting_cm_no["No", "Yes"]    
+tn <- boosting_cm_no["Yes", "Yes"]   
+boosting_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+boosting_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+boosting_cm_yes <- confusionMatrix(boosting_preds, testData_BORUTA$Class, positive = 'Yes')
+boosting_cm_yes
+
+boosting_cm_yes <- boosting_cm_yes$table
+tn <- boosting_cm_yes["No", "No"]    
+fp <- boosting_cm_yes["Yes", "No"]   
+fn <- boosting_cm_yes["No", "Yes"]   
+tp <- boosting_cm_yes["Yes", "Yes"]  
+
+boosting_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+boosting_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 6 : xgb  
 ## df : Sensitivity : 0.8292
@@ -957,8 +2502,79 @@ xgb_model
 plot(xgb_model)
 
 xgb_preds <- predict(xgb_model, testData_BORUTA)
-xgb_cm <- confusionMatrix(xgb_preds, testData_BORUTA$Class)
-xgb_cm
+xgb_cm_no <- confusionMatrix(xgb_preds, testData_BORUTA$Class)
+xgb_cm_no
+
+xgb_cm_no <- xgb_cm_no$table
+tp <- xgb_cm_no["No", "No"]     
+fn <- xgb_cm_no["Yes", "No"]    
+fp <- xgb_cm_no["No", "Yes"]    
+tn <- xgb_cm_no["Yes", "Yes"]   
+xgb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+xgb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+xgb_cm_yes <- confusionMatrix(xgb_preds, testData_BORUTA$Class, positive = 'Yes')
+xgb_cm_yes
+
+xgb_cm_yes <- xgb_cm_yes$table
+tn <- xgb_cm_yes["No", "No"]    
+fp <- xgb_cm_yes["Yes", "No"]   
+fn <- xgb_cm_yes["No", "Yes"]   
+tp <- xgb_cm_yes["Yes", "Yes"]  
+
+xgb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+xgb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
 
 ## EXTRA MODEL 7 : Stacked Ensemble Method 
 ## df : Sensitivity : 0.8283 
@@ -1019,7 +2635,7 @@ table(testData_RFE$Class)             # df : Class distribution testData_RFE No:
 dim(testData_RFE)                     # df : testData_RFE dimensions 1295   11  
 
 ## ** ----------  STEP 7.2.1:  TOMEK-RFE - Best Models (Only df) ---------- **   
-## MODEL 1 : Balanced Random Forest 
+## MODEL 1 :  Random Forest 
 ## df : Sensitivity : 0.7917 
 ## df : Specificity : 0.8105 
 library(UBL)
@@ -1033,10 +2649,80 @@ brf_model <- randomForest(Class ~ .,  data = trainData_Tomek_RFE, tuneGrid = brf
 brf_model
 
 brf_preds <- predict(brf_model, testData_RFE)
-brf_cm <- confusionMatrix(brf_preds, testData_RFE$Class)
-brf_cm 
+brf_cm_no <- confusionMatrix(brf_preds, testData_RFE$Class)
+brf_cm_no 
 
-## MODEL 2 : Support Vector Machine:
+brf_cm_no <- brf_cm_no$table
+tp <- brf_cm_no["No", "No"]     
+fn <- brf_cm_no["Yes", "No"]    
+fp <- brf_cm_no["No", "Yes"]    
+tn <- brf_cm_no["Yes", "Yes"]   
+brf_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+brf_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+brf_cm_yes <- confusionMatrix(brf_preds, testData_RFE$Class, positive = 'Yes')
+brf_cm_yes 
+
+brf_cm_yes <- brf_cm_yes$table
+tn <- brf_cm_yes["No", "No"]    
+fp <- brf_cm_yes["Yes", "No"]   
+fn <- brf_cm_yes["No", "Yes"]   
+tp <- brf_cm_yes["Yes", "Yes"]  
+
+brf_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+brf_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 2 : Support Vector Machine
 ## df : Sensitivity : 0.8075 
 ## df : Specificity : 0.8000 
 set.seed(123)
@@ -1050,10 +2736,80 @@ svm_model
 plot(svm_model)
 
 svm_preds <- predict(svm_model, testData_RFE)
-svm_cm <- confusionMatrix(svm_preds, testData_RFE$Class)
-svm_cm
+svm_cm_no <- confusionMatrix(svm_preds, testData_RFE$Class)
+svm_cm_no
 
-## MODEL 3 : kNN: 
+svm_cm_no <- svm_cm_no$table
+tp <- svm_cm_no["No", "No"]     
+fn <- svm_cm_no["Yes", "No"]    
+fp <- svm_cm_no["No", "Yes"]    
+tn <- svm_cm_no["Yes", "Yes"]   
+svm_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+svm_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+svm_cm_yes <- confusionMatrix(svm_preds, testData_RFE$Class, positive = 'Yes')
+svm_cm_yes
+
+svm_cm_yes <- svm_cm_yes$table
+tn <- svm_cm_yes["No", "No"]    
+fp <- svm_cm_yes["Yes", "No"]   
+fn <- svm_cm_yes["No", "Yes"]   
+tp <- svm_cm_yes["Yes", "Yes"]  
+
+svm_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+svm_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 3 : kNN
 ## df : Sensitivity : 0.8008 
 ## df : Specificity : 0.8105 
 library(caret)
@@ -1069,13 +2825,83 @@ knn_model
 plot(knn_model)
 
 knn_preds <- predict(knn_model, testData_RFE)
-knn_test_cm <- confusionMatrix(knn_preds, testData_RFE$Class)
-knn_test_cm
+knn_cm_no <- confusionMatrix(knn_preds, testData_RFE$Class)
+knn_cm_no
 
-knn_model$bestTune
-knn_model$results
+#knn_model$bestTune
+#knn_model$results
 
-## MODEL 4 : Naives Bayes:
+knn_cm_no <- knn_cm_no$table
+tp <- knn_cm_no["No", "No"]     
+fn <- knn_cm_no["Yes", "No"]    
+fp <- knn_cm_no["No", "Yes"]    
+tn <- knn_cm_no["Yes", "Yes"]   
+knn_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+knn_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+knn_cm_yes <- confusionMatrix(knn_preds, testData_RFE$Class, positive = 'Yes')
+knn_cm_yes
+
+knn_cm_yes <- knn_cm_yes$table
+tn <- knn_cm_yes["No", "No"]    
+fp <- knn_cm_yes["Yes", "No"]   
+fn <- knn_cm_yes["No", "Yes"]   
+tp <- knn_cm_yes["Yes", "Yes"]  
+
+knn_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+knn_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 4 : Naives Bayes
 ## df : Sensitivity : 0.7675 
 ## df : Specificity : 0.8526  
 library(e1071)  
@@ -1091,8 +2917,78 @@ nb_model
 plot(nb_model)
 
 nb_preds <- predict(nb_model, testData_RFE)
-nb_cm <- confusionMatrix(nb_preds, testData_RFE$Class)
-nb_cm
+nb_cm_no <- confusionMatrix(nb_preds, testData_RFE$Class)
+nb_cm_no
+
+nb_cm_no <- nb_cm_no$table
+tp <- nb_cm_no["No", "No"]     
+fn <- nb_cm_no["Yes", "No"]    
+fp <- nb_cm_no["No", "Yes"]    
+tn <- nb_cm_no["Yes", "Yes"]   
+nb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nb_cm_yes <- confusionMatrix(nb_preds, testData_RFE$Class, positive = 'Yes')
+nb_cm_yes
+
+nb_cm_yes <- nb_cm_yes$table
+tn <- nb_cm_yes["No", "No"]    
+fp <- nb_cm_yes["Yes", "No"]   
+fn <- nb_cm_yes["No", "Yes"]   
+tp <- nb_cm_yes["Yes", "Yes"]  
+
+nb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 5 : Logistic Regression  
 ## df : Sensitivity : 0.8033  
@@ -1105,8 +3001,79 @@ lr_model <- train(Class ~ ., data = trainData_Tomek_RFE, method = "glm", family 
 lr_model
 
 lr_preds <- predict(lr_model, testData_RFE)
-lr_cm <- confusionMatrix(lr_preds, testData_RFE$Class)
-lr_cm 
+lr_cm_no <- confusionMatrix(lr_preds, testData_RFE$Class)
+lr_cm_no 
+
+lr_cm_no <- lr_cm_no$table
+tp <- lr_cm_no["No", "No"]     
+fn <- lr_cm_no["Yes", "No"]    
+fp <- lr_cm_no["No", "Yes"]    
+tn <- lr_cm_no["Yes", "Yes"]   
+lr_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+lr_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+lr_cm_yes <- confusionMatrix(lr_preds, testData_RFE$Class, positive = 'Yes')
+lr_cm_yes 
+
+lr_cm_yes <- lr_cm_yes$table
+tn <- lr_cm_yes["No", "No"]    
+fp <- lr_cm_yes["Yes", "No"]   
+fn <- lr_cm_yes["No", "Yes"]   
+tp <- lr_cm_yes["Yes", "Yes"]  
+
+lr_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+lr_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
 
 ## MODEL 6 : xgb 
 ## df : Sensitivity : 0.8167  
@@ -1127,8 +3094,78 @@ xgb_model
 plot(xgb_model)
 
 xgb_preds <- predict(xgb_model, testData_RFE)
-xgb_cm <- confusionMatrix(xgb_preds, testData_RFE$Class)
-xgb_cm
+xgb_cm_no <- confusionMatrix(xgb_preds, testData_RFE$Class)
+xgb_cm_no
+
+xgb_cm_no <- xgb_cm_no$table
+tp <- xgb_cm_no["No", "No"]     
+fn <- xgb_cm_no["Yes", "No"]    
+fp <- xgb_cm_no["No", "Yes"]    
+tn <- xgb_cm_no["Yes", "Yes"]   
+xgb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+xgb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+xgb_cm_yes <- confusionMatrix(xgb_preds, testData_RFE$Class, positive = 'Yes')
+xgb_cm_yes
+
+xgb_cm_yes <- xgb_cm_yes$table
+tn <- xgb_cm_yes["No", "No"]    
+fp <- xgb_cm_yes["Yes", "No"]   
+fn <- xgb_cm_yes["No", "Yes"]   
+tp <- xgb_cm_yes["Yes", "Yes"]  
+
+xgb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+xgb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## EXTRA MODEL 7 : RPART 
 ## df : Sensitivity : 0.8058 
@@ -1171,35 +3208,35 @@ ggplot(corrDf, aes(x = reorder(corrFeature, Correlation), y = Correlation)) + ge
   labs( title = "Correlation with Class (Yes = 1, No = 0)", x = "corrFeature", y = "Correlation" ) +
   theme_minimal() 
 
-corrYes <- dplyr::slice( dplyr::arrange( dplyr::filter(corrDf, Correlation > 0), desc(Correlation)), 1:3)
-corrYes 
+corrPositive <- dplyr::slice( dplyr::arrange( dplyr::filter(corrDf, Correlation > 0), desc(Correlation)), 1:3)
+corrPositive 
 
-corrNo <- dplyr::slice( dplyr::arrange( dplyr::filter(corrDf, Correlation < 0), (Correlation)), 1:3)
-corrNo 
-
-corrTopFeatures <- c(corrYes$corrFeature, corrNo$corrFeature)    
+corrNegative <- dplyr::slice( dplyr::arrange( dplyr::filter(corrDf, Correlation < 0), (Correlation)), 1:3)
+corrNegative 
+ 
+corrTopFeatures <- c(corrYes$corrFeature, corrNegative$corrFeature)    
 corrTopFeatures                       # df1 : Print corrTopFeatures  
 length(corrTopFeatures)               # df1 : 6 corrTopFeatures found  
 
 pairwise_data <- trainData_Tomek_df1 %>% select(all_of(corrTopFeatures), Class)
 ggpairs(pairwise_data, upper = list(continuous = wrap("cor", size = 2)), diag = list(continuous = wrap("densityDiag")), lower = list(continuous = wrap("points", alpha = 0.6))) +
-  theme_minimal()
+theme_minimal()
 
 corrMap <- setNames(corrDf$Correlation, corrDf$corrFeature)
 plots <- lapply(corrTopFeatures, function(feature) { corr_val <- round(corrMap[feature], 2)
-
+  
 ggplot(trainData_Tomek_df1, aes_string(x = "Class", y = feature)) + geom_jitter(width = 0.2, alpha = 0.5) +
-  labs(title = paste0(feature, " (r = ", corr_val, ")"), x = NULL, y = NULL) + theme_minimal() })
+        labs(title = paste0(feature, " (r = ", corr_val, ")"), x = NULL, y = NULL) + theme_minimal() })
 wrap_plots(plots, ncol = 2) + plot_annotation(title = "Scatterplots: Features vs. Class")
 
 trainData_Tomek_CORR_df1 <- trainData_Tomek_df1[, c(corrTopFeatures, "Class")]
 testData_CORR_df1 <- testData_df1[, c(corrTopFeatures, "Class")]
 
-table(trainData_Tomek_CORR_df1$Class)     # df : Class distribution trainData_Tomek_CORR_df1 No: 134 and Yes: 134 
-dim(trainData_Tomek_CORR_df1)             # df : trainData_Tomek_CORR_df1 dimensions 268   7 
+table(trainData_Tomek_CORR_df1$Class)     # df1 : Class distribution trainData_Tomek_CORR_df1 No: 134 and Yes: 134 
+dim(trainData_Tomek_CORR_df1)             # df1 : trainData_Tomek_CORR_df1 dimensions 268   7 
 
-table(testData_CORR_df1$Class)            # df : Class distribution testData_CORR_df1 No: 1200 and Yes: 95 
-dim(testData_CORR_df1)                    # df : testData_CORR_df1 dimensions 1295   7 
+table(testData_CORR_df1$Class)            # df1 : Class distribution testData_CORR_df1 No: 1200 and Yes: 95 
+dim(testData_CORR_df1)                    # df1 : testData_CORR_df1 dimensions 1295   7 
 
 ## ** ----------  STEP 7.3.1:  TOMEK-CORR - Best Models (Only df1) ---------- **   
 ## MODEL 1 :  Random Forest 
@@ -1217,10 +3254,80 @@ brf_model <- randomForest(Class ~ .,  data = trainData_Tomek_CORR_df1, tuneGrid 
 brf_model
 
 brf_preds <- predict(brf_model, testData_CORR_df1)
-brf_cm <- confusionMatrix(brf_preds, testData_CORR_df1$Class)
-brf_cm 
+brf_cm_no <- confusionMatrix(brf_preds, testData_CORR_df1$Class)
+brf_cm_no 
 
-## MODEL 2 : Support Vector Machine:
+brf_cm_no <- brf_cm_no$table
+tp <- brf_cm_no["No", "No"]     
+fn <- brf_cm_no["Yes", "No"]    
+fp <- brf_cm_no["No", "Yes"]    
+tn <- brf_cm_no["Yes", "Yes"]   
+brf_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+brf_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+brf_cm_yes <- confusionMatrix(brf_preds, testData_CORR_df1$Class, positive = 'Yes')
+brf_cm_yes 
+
+brf_cm_yes <- brf_cm_yes$table
+tn <- brf_cm_yes["No", "No"]    
+fp <- brf_cm_yes["Yes", "No"]   
+fn <- brf_cm_yes["No", "Yes"]   
+tp <- brf_cm_yes["Yes", "Yes"]  
+
+brf_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+brf_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 2 : Support Vector Machine
 ## df1: Sensitivity : 0.8025 
 ## df1 : Specificity : 0.8105 
 set.seed(123)
@@ -1235,8 +3342,78 @@ svm_model
 plot(svm_model)
 
 svm_preds <- predict(svm_model, testData_CORR_df1)
-svm_cm <- confusionMatrix(svm_preds, testData_CORR_df1$Class)
-svm_cm
+svm_cm_no <- confusionMatrix(svm_preds, testData_CORR_df1$Class)
+svm_cm_no
+
+svm_cm_no <- svm_cm_no$table
+tp <- svm_cm_no["No", "No"]     
+fn <- svm_cm_no["Yes", "No"]    
+fp <- svm_cm_no["No", "Yes"]    
+tn <- svm_cm_no["Yes", "Yes"]   
+svm_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+svm_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+svm_cm_yes <- confusionMatrix(svm_preds, testData_CORR_df1$Class, positive = 'Yes')
+svm_cm_yes
+
+svm_cm_yes <- svm_cm_yes$table
+tn <- svm_cm_yes["No", "No"]    
+fp <- svm_cm_yes["Yes", "No"]   
+fn <- svm_cm_yes["No", "Yes"]   
+tp <- svm_cm_yes["Yes", "Yes"]  
+
+svm_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+svm_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ### Alternate cutoffs
 ## df1 : Sensitivity : 0.8142 
@@ -1276,7 +3453,7 @@ SVMwts_preds <- predict(SVMwts_model, testData_CORR_df1)
 SVMwt_cm <- confusionMatrix(SVMwts_preds, testData_CORR_df1$Class)
 SVMwt_cm
 
-## MODEL 3 : kNN: 
+## MODEL 3 : kNN 
 ## df1 : Sensitivity : 0.7450 
 ## df1 : Specificity : 0.8632 
 library(caret)
@@ -1292,13 +3469,83 @@ knn_model
 plot(knn_model)
 
 knn_preds <- predict(knn_model, testData_CORR_df1)
-knn_test_cm <- confusionMatrix(knn_preds, testData_CORR_df1$Class)
-knn_test_cm
+knn_cm_no <- confusionMatrix(knn_preds, testData_CORR_df1$Class)
+knn_cm_no
 
-knn_model$bestTune
-knn_model$results
+#knn_model$bestTune
+#knn_model$results 
 
-## MODEL 4 : Naives Bayes:
+knn_cm_no <- knn_cm_no$table
+tp <- knn_cm_no["No", "No"]     
+fn <- knn_cm_no["Yes", "No"]    
+fp <- knn_cm_no["No", "Yes"]    
+tn <- knn_cm_no["Yes", "Yes"]   
+knn_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+knn_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+knn_cm_yes <- confusionMatrix(knn_preds, testData_CORR_df1$Class, positive = 'Yes')
+knn_cm_yes
+
+knn_cm_yes <- knn_cm_yes$table
+tn <- knn_cm_yes["No", "No"]    
+fp <- knn_cm_yes["Yes", "No"]   
+fn <- knn_cm_yes["No", "Yes"]   
+tp <- knn_cm_yes["Yes", "Yes"]  
+
+knn_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+knn_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 4 : Naives Bayes
 ## df1 : Sensitivity : 0.7942 
 ## df1 : Specificity : 0.8105 
 library(e1071)  
@@ -1314,8 +3561,78 @@ nb_model
 plot(nb_model)
 
 nb_preds <- predict(nb_model, testData_CORR_df1)
-nb_cm <- confusionMatrix(nb_preds, testData_CORR_df1$Class)
-nb_cm
+nb_cm_no <- confusionMatrix(nb_preds, testData_CORR_df1$Class)
+nb_cm_no
+
+nb_cm_no <- nb_cm_no$table
+tp <- nb_cm_no["No", "No"]     
+fn <- nb_cm_no["Yes", "No"]    
+fp <- nb_cm_no["No", "Yes"]    
+tn <- nb_cm_no["Yes", "Yes"]   
+nb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nb_cm_yes <- confusionMatrix(nb_preds, testData_CORR_df1$Class, positive = 'Yes')
+nb_cm_yes
+
+nb_cm_yes <- nb_cm_yes$table
+tn <- nb_cm_yes["No", "No"]    
+fp <- nb_cm_yes["Yes", "No"]   
+fn <- nb_cm_yes["No", "Yes"]   
+tp <- nb_cm_yes["Yes", "Yes"]  
+
+nb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 5 : Logistic Regression  
 ## df1 : Sensitivity : 0.7625 
@@ -1328,8 +3645,79 @@ lr_model <- train(Class ~ ., data = trainData_Tomek_CORR_df1, method = "glm", me
 lr_model
 
 lr_preds <- predict(lr_model, testData_CORR_df1)
-lr_cm <- confusionMatrix(lr_preds, testData_CORR_df1$Class)
-lr_cm
+lr_cm_no <- confusionMatrix(lr_preds, testData_CORR_df1$Class)
+lr_cm_no
+
+lr_cm_no <- lr_cm_no$table
+tp <- lr_cm_no["No", "No"]     
+fn <- lr_cm_no["Yes", "No"]    
+fp <- lr_cm_no["No", "Yes"]    
+tn <- lr_cm_no["Yes", "Yes"]   
+lr_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+lr_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+lr_cm_yes <- confusionMatrix(lr_preds, testData_CORR_df1$Class, positive = 'Yes')
+lr_cm_yes
+
+lr_cm_yes <- lr_cm_yes$table
+tn <- lr_cm_yes["No", "No"]    
+fp <- lr_cm_yes["Yes", "No"]   
+fn <- lr_cm_yes["No", "Yes"]   
+tp <- lr_cm_yes["Yes", "Yes"]  
+
+lr_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+lr_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
 
 ## MODEL 6 : xgb 
 ## df1 : Sensitivity : 0.7850 
@@ -1349,8 +3737,78 @@ xgb_model
 plot(xgb_model)
 
 xgb_preds <- predict(xgb_model, testData_CORR_df1)
-xgb_cm <- confusionMatrix(xgb_preds, testData_CORR_df1$Class)
-xgb_cm
+xgb_cm_no <- confusionMatrix(xgb_preds, testData_CORR_df1$Class)
+xgb_cm_no
+
+xgb_cm_no <- xgb_cm_no$table
+tp <- xgb_cm_no["No", "No"]     
+fn <- xgb_cm_no["Yes", "No"]    
+fp <- xgb_cm_no["No", "Yes"]    
+tn <- xgb_cm_no["Yes", "Yes"]   
+xgb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+xgb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+xgb_cm_yes <- confusionMatrix(xgb_preds, testData_CORR_df1$Class, positive = 'Yes')
+xgb_cm_yes
+
+xgb_cm_yes <- xgb_cm_yes$table
+tn <- xgb_cm_yes["No", "No"]    
+fp <- xgb_cm_yes["Yes", "No"]   
+fn <- xgb_cm_yes["No", "Yes"]   
+tp <- xgb_cm_yes["Yes", "Yes"]  
+
+xgb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+xgb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## EXTRA MODEL 7 : ADABOOST 
 ## df1 : Sensitivity : 0.7833  
@@ -1386,19 +3844,19 @@ names(info_gain)[names(info_gain) == "importance"] <- "Info_Gain"
 sorted_info_gain <- info_gain[order(-info_gain$Info_Gain), ]
 infoGainFeatures <- sorted_info_gain[1:6, ]
 
-print(infoGainFeatures)               # Print infoGainFeatures 
-nrow(infoGainFeatures)                # 6 infoGainFeatures found
+print(infoGainFeatures)               # df1 : Print infoGainFeatures 
+nrow(infoGainFeatures)                # df1 : 6 infoGainFeatures found
 
 infoGainFeatures <- infoGainFeatures$attributes
 
 trainData_Tomek_InfoGain_df1 <- trainData_Tomek_df1[, c(infoGainFeatures, "Class")]
 testDataInfoGain_df1 <- testData_df1[, c(infoGainFeatures, "Class")] 
 
-table(trainData_Tomek_InfoGain_df1$Class)   # Class distribution trainData_Tomek_InfoGain_df1 No: 134 and Yes: 134 
-dim(trainData_Tomek_InfoGain_df1)           # trainData_Tomek_InfoGain_df1 dimensions 268   7 
+table(trainData_Tomek_InfoGain_df1$Class)   # df1 : Class distribution trainData_Tomek_InfoGain_df1 No: 134 and Yes: 134 
+dim(trainData_Tomek_InfoGain_df1)           # df1 : trainData_Tomek_InfoGain_df1 dimensions 268   7 
 
-table(testDataInfoGain_df1$Class)           # Class distribution testDataInfoGain_df1 No: 1200 and Yes: 95   
-dim(testDataInfoGain_df1)                   # testDataInfoGain_df1 dimensions 1295   7 
+table(testDataInfoGain_df1$Class)           # df1 : Class distribution testDataInfoGain_df1 No: 1200 and Yes: 95   
+dim(testDataInfoGain_df1)                   # df1 : testDataInfoGain_df1 dimensions 1295   7 
 
 ## ** ----------  STEP 7.3.1:  TOMEK-INFORMATION GAIN - Best Models (Only df1) ---------- **   
 ## MODEL 1 :  Random Forest 
@@ -1416,10 +3874,80 @@ brf_model <- randomForest(Class ~ .,  data = trainData_Tomek_InfoGain_df1, tuneG
 brf_model
 
 brf_preds <- predict(brf_model, testDataInfoGain_df1)
-brf_cm <- confusionMatrix(brf_preds, testDataInfoGain_df1$Class)
-brf_cm 
+brf_cm_no <- confusionMatrix(brf_preds, testDataInfoGain_df1$Class)
+brf_cm_no 
 
-## MODEL 2 : Support Vector Machine:
+brf_cm_no <- brf_cm_no$table
+tp <- brf_cm_no["No", "No"]     
+fn <- brf_cm_no["Yes", "No"]    
+fp <- brf_cm_no["No", "Yes"]    
+tn <- brf_cm_no["Yes", "Yes"]   
+brf_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+brf_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+brf_cm_yes <- confusionMatrix(brf_preds, testDataInfoGain_df1$Class, positive = 'Yes')
+brf_cm_yes 
+
+brf_cm_yes <- brf_cm_yes$table
+tn <- brf_cm_yes["No", "No"]    
+fp <- brf_cm_yes["Yes", "No"]   
+fn <- brf_cm_yes["No", "Yes"]   
+tp <- brf_cm_yes["Yes", "Yes"]  
+
+brf_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+brf_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 2 : Support Vector Machine
 ## df1 : Sensitivity : 0.8333 
 ## df1 : Specificity : 0.7684 
 set.seed(123)
@@ -1434,10 +3962,80 @@ svm_model
 plot(svm_model)
 
 svm_preds <- predict(svm_model, testDataInfoGain_df1)
-svm_cm <- confusionMatrix(svm_preds, testDataInfoGain_df1$Class)
-svm_cm 
+svm_cm_no <- confusionMatrix(svm_preds, testDataInfoGain_df1$Class)
+svm_cm_no 
 
-## MODEL 3 : kNN:
+svm_cm_no <- svm_cm_no$table
+tp <- svm_cm_no["No", "No"]     
+fn <- svm_cm_no["Yes", "No"]    
+fp <- svm_cm_no["No", "Yes"]    
+tn <- svm_cm_no["Yes", "Yes"]   
+svm_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+svm_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+svm_cm_yes <- confusionMatrix(svm_preds, testDataInfoGain_df1$Class,  positive = 'Yes')
+svm_cm_yes 
+
+svm_cm_yes <- svm_cm_yes$table
+tn <- svm_cm_yes["No", "No"]    
+fp <- svm_cm_yes["Yes", "No"]   
+fn <- svm_cm_yes["No", "Yes"]   
+tp <- svm_cm_yes["Yes", "Yes"]  
+
+svm_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+svm_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 3 : kNN
 ## df1 : Sensitivity : 0.7625 
 ## df1 : Specificity : 0.8105  
 library(caret)
@@ -1453,13 +4051,83 @@ knn_model
 plot(knn_model)
 
 knn_preds <- predict(knn_model, testDataInfoGain_df1)
-knn_test_cm <- confusionMatrix(knn_preds, testDataInfoGain_df1$Class)
-knn_test_cm
+knn_cm_no <- confusionMatrix(knn_preds, testDataInfoGain_df1$Class)
+knn_cm_no
 
-knn_model$bestTune
-knn_model$results
+#knn_model$bestTune
+#knn_model$results 
 
-## MODEL 4 : Naives Bayes:
+knn_cm_no <- knn_cm_no$table
+tp <- knn_cm_no["No", "No"]     
+fn <- knn_cm_no["Yes", "No"]    
+fp <- knn_cm_no["No", "Yes"]    
+tn <- knn_cm_no["Yes", "Yes"]   
+knn_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+knn_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+knn_cm_yes <- confusionMatrix(knn_preds, testDataInfoGain_df1$Class, positive = 'Yes')
+knn_cm_yes
+
+knn_cm_yes <- knn_cm_yes$table
+tn <- knn_cm_yes["No", "No"]    
+fp <- knn_cm_yes["Yes", "No"]   
+fn <- knn_cm_yes["No", "Yes"]   
+tp <- knn_cm_yes["Yes", "Yes"]  
+
+knn_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+knn_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
+
+## MODEL 4 : Naives Bayes
 ## df1 : Sensitivity : 0.7292  
 ## df1 : Specificity : 0.8526 
 library(e1071)  
@@ -1475,8 +4143,78 @@ nb_model
 plot(nb_model)
 
 nb_preds <- predict(nb_model, testDataInfoGain_df1)
-nb_cm <- confusionMatrix(nb_preds, testDataInfoGain_df1$Class)
-nb_cm
+nb_cm_no <- confusionMatrix(nb_preds, testDataInfoGain_df1$Class)
+nb_cm_no
+
+nb_cm_no <- nb_cm_no$table
+tp <- nb_cm_no["No", "No"]     
+fn <- nb_cm_no["Yes", "No"]    
+fp <- nb_cm_no["No", "Yes"]    
+tn <- nb_cm_no["Yes", "Yes"]   
+nb_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+nb_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+nb_cm_yes <- confusionMatrix(nb_preds, testDataInfoGain_df1$Class, positive = 'Yes')
+nb_cm_yes
+
+nb_cm_yes <- nb_cm_yes$table
+tn <- nb_cm_yes["No", "No"]    
+fp <- nb_cm_yes["Yes", "No"]   
+fn <- nb_cm_yes["No", "Yes"]   
+tp <- nb_cm_yes["Yes", "Yes"]  
+
+nb_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+nb_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 5 : RPART 
 ## df1 : Sensitivity : 0.8300
@@ -1497,8 +4235,78 @@ plot(rpart_model)
 prp(rpart_model$finalModel, type = 2, extra = 104, fallen.leaves = TRUE, varlen = 0)
 
 rpart_preds <- predict(rpart_model, testDataInfoGain_df1)
-rpart_cm <- confusionMatrix(rpart_preds, testDataInfoGain_df1$Class)
-rpart_cm
+rpart_cm_no <- confusionMatrix(rpart_preds, testDataInfoGain_df1$Class)
+rpart_cm_no 
+
+rpart_cm_no <- rpart_cm_no$table
+tp <- rpart_cm_no["No", "No"]     
+fn <- rpart_cm_no["Yes", "No"]    
+fp <- rpart_cm_no["No", "Yes"]    
+tn <- rpart_cm_no["Yes", "Yes"]   
+rpart_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+rpart_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+rpart_cm_yes <- confusionMatrix(rpart_preds, testDataInfoGain_df1$Class, positive = 'Yes')
+rpart_cm_yes 
+
+rpart_cm_yes <- rpart_cm_yes$table
+tn <- rpart_cm_yes["No", "No"]    
+fp <- rpart_cm_yes["Yes", "No"]   
+fn <- rpart_cm_yes["No", "Yes"]   
+tp <- rpart_cm_yes["Yes", "Yes"]  
+
+rpart_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+rpart_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## MODEL 6 : Logistic Regression 
 ## df1 : Sensitivity : 0.8025
@@ -1513,8 +4321,78 @@ lr_model
 plot(lr_model)
 
 lr_preds <- predict(lr_model, testDataInfoGain_df1)
-lr_cm <- confusionMatrix(lr_preds, testDataInfoGain_df1$Class)
-lr_cm 
+lr_cm_no <- confusionMatrix(lr_preds, testDataInfoGain_df1$Class)
+lr_cm_no 
+
+lr_cm_no <- lr_cm_no$table
+tp <- lr_cm_no["No", "No"]     
+fn <- lr_cm_no["Yes", "No"]    
+fp <- lr_cm_no["No", "Yes"]    
+tn <- lr_cm_no["Yes", "Yes"]   
+lr_cm_no <- c(tp = tp, fn = fn, fp = fp, tn = tn)
+lr_cm_no 
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+no_pmeasures = calculate_measures(tp, fp, tn, fn)
+no_pmeasures
+
+lr_cm_yes <- confusionMatrix(lr_preds, testDataInfoGain_df1$Class, positive = 'Yes')
+lr_cm_yes 
+
+lr_cm_yes <- lr_cm_yes$table
+tn <- lr_cm_yes["No", "No"]    
+fp <- lr_cm_yes["Yes", "No"]   
+fn <- lr_cm_yes["No", "Yes"]   
+tp <- lr_cm_yes["Yes", "Yes"]  
+
+lr_cm_yes <- c(tn = tn, fp = fp, fn = fn, tp = tp)
+lr_cm_yes
+
+calculate_measures <- function(tp, fp, tn, fn){
+  tpr = tp / (tp + fn)
+  fpr = fp / (fp + tn)
+  tnr = tn / (fp + tn)
+  fnr = fn / (fn + tp)
+  precision = tp / (tp + fp)
+  recall = tpr
+  f_measure <- (2 * precision * recall) / (precision + recall)
+  mcc <- (tp*tn - fp*fn)/(sqrt(tp+fp)*sqrt(tp+fn)*sqrt(tn+fp)*sqrt(tn+fn))
+  total = (tp + fn + fp + tn)
+  p_o = (tp + tn) / total
+  p_e1 = ((tp + fn) / total) * ((tp + fp) / total)
+  p_e2 = ((fp + tn) / total) * ((fn + tn) / total)
+  p_e = p_e1 + p_e2
+  k = (p_o - p_e) / (1 - p_e) 
+  
+  measures <- c('TPR', 'FPR', 'TNR', 'FNR', 'Precision', 'Recall', 'F-measure', 'MCC', 'Kappa')
+  values <- c(tpr, fpr, tnr, fnr, precision, recall, f_measure, mcc, k)
+  measure.df <- data.frame(measures, values)
+  return (measure.df)
+}
+
+yes_pmeasures = calculate_measures(tp, fp, tn, fn)
+yes_pmeasures
 
 ## EXTRA MODEL 7 : xgboost 
 ## df1 : Sensitivity : 0.7992 
@@ -1536,22 +4414,3 @@ plot(xgb_model)
 xgb_preds <- predict(xgb_model, testDataInfoGain_df1)
 xgb_cm <- confusionMatrix(xgb_preds, testDataInfoGain_df1$Class)
 xgb_cm
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
