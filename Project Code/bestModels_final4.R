@@ -1,6 +1,6 @@
 ## ** ------------------------------------------------------------------------------------ ** 
 ## CS699 – Spring 2025 - Project Assignment 
-## Students : Melanie R Loaiza, BU ID : U78379196 and Carlos Vargas, BU ID: U42396592  
+## Students : Melanie R Loaiza, BU ID and Carlos Vargas,  
 ## ** ------------------------------------------------------------------------------------ **  
 
 ## ** ----------  STEP 1: Load and Preview project_data.csv ---------- **
